@@ -1,0 +1,51 @@
+site_name: toughreact-concrete
+site_description: Reactive transport and chemical durability simulation for concrete structures
+site_author: Anthony Soive
+repo_url: https://github.com/anthonysoive/toughreact-concrete
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            docstring_style: numpy
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Quick start: quickstart.md
+  - User guide:
+      - Geometry: user_guide/geometry.md
+      - Hydration: user_guide/hydration.md
+      - Materials: user_guide/materials.md
+      - Boundary conditions: user_guide/boundary.md
+      - Post-processing: user_guide/postprocessing.md
+  - API reference:
+      - Geometry: api/geometry.md
+      - Materials: api/materials.md
+      - Model: api/model.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

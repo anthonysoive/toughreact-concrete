@@ -1,0 +1,36 @@
+'TOUGHREACT Analysis'
+#RECORD 2: Option Variables for Reactive Geochemical Transport (1)
+    0    1    5  0    0    0    UPDATE_PORO    0    0
+#RECORD 3: Option Variables for Reactive Geochemical Transport (2)
+    1.0E-3       RCOUR       4.0       1.0      1.0  
+#RECORD 4: Thermodynamic DB and Output File Names
+DATABASE            ! Thermodynamic Database
+iter.out            ! Iteration Information
+plot.dat            ! Aqueous Concentrations (Tecplot Format)
+solid.out           ! Mineral Data (Tecplot Format)
+gas.out             ! Gas Data (Tecplot Format)
+time.out            ! Concentrations at Specific Elements Over Time
+#RECORD 5: Weighting Parameters
+       1.0       1.0  DIFF_COEFF      -1.0  -1.00  
+#RECORD 6: Data related to Convergence Criteria
+    1    1.0E-4  1000    1.0E-5   0    0       1.0E-6       1.0E-6
+#RECORD 7: Writing Control Variables
+  100 1    NB_SPECIES    NB_MINERALS    0    NB_COMPLEXES    0    1    2   1   
+#RECORD 8: List of Grid Blocks for Printing Time Evolution Results 
+  a 1
+#RECORD 9: List of Components (indices) to be Printed Out
+    NUM_SPECIES
+#RECORD 10: List of Minerals (indices) to be Printed Out
+    NUM_MINERALS
+#RECORD 11:Individual aqueous species for which to output concentrations in time and plot files:
+
+#RECORD 12:Adsorption species for which to output concentrations in time and plot files:
+NUM_COMPLEXES
+#RECORD 13:Exchange species for which to output concentrations in time and plot files:
+
+#RECORD 14: Default Values for Chemical Property Zone related to Grid Blocks
+DEFAULT_CHEM_PROP
+#RECORD 15 : Chemical Property Zone related to Grid Blocks
+BND_CHEM_PROP
+# this "end" record is needed now
+end

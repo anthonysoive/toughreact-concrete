@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "toughreact-concrete"
+version = "1.0.0"
+description = "Reactive transport and chemical durability simulation for concrete structures using TOUGHREACT"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Anthony Soive", email = "anthony.soive@cerema.fr" }]
+requires-python = ">=3.11"
+dependencies = [
+    "PyTOUGH>=1.6.5",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "nlopt>=2.7",
+    "sympy>=1.12",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff>=0.4",
+    "mypy>=1.0",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["toughreact_concrete"]
+
+[tool.ruff]
+line-length = 100
+exclude = [
+    "M2_28d.py",
+    "new_M2_28d.py",
+    "toughreact_concrete/materiau/hydration/floculation.py",
+    "toughreact_concrete/materiau/hydration/hydrationDIM_CTOA4.py",
+    "toughreact_concrete/materiau/hydration/pyisocalc.py",
+    "toughreact_concrete/model/element_struct.py",
+    "toughreact_concrete/model/t2R_savechem.py",
+    "toughreact_concrete/model/toughreact.py",
+    "toughreact_concrete/model/post.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"toughreact_concrete/materiau/hydration/calcul_hydratation.py" = ["E501"]
+"toughreact_concrete/materiau/mat_ciment.py" = ["E501", "E702", "F841"]
+"toughreact_concrete/materiau/mat_poreux.py" = ["E501", "F841"]
+"toughreact_concrete/model/data/*.py" = ["E501", "F601"]
+"toughreact_concrete/model/conversion_species.py" = ["E501", "F601", "F841"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

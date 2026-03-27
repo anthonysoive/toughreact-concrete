@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# TOUGHREACT working directory and outputs
+Calcul/
+*.out
+*.xls
+
+# TOUGHREACT binaries (distributed separately)
+toughreact_concrete/exe/
+
+# Claude Code
+CLAUDE.md
+MODERNISATION.md
+CLAUDE/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Mypy
+.mypy_cache/
+
+# MkDocs
+site/
+
+# IDE
+.vscode/
+.idea/

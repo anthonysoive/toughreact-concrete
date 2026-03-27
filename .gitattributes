@@ -1,0 +1,9 @@
+# Normalize line endings to LF in the repository, check out as-is on all platforms
+* text=auto eol=lf
+
+# Force binary files to not be modified
+*.exe binary
+*.dll binary
+*.dat binary
+*.xls binary
+*.xlsx binary
