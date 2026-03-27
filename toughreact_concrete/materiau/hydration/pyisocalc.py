@@ -277,7 +277,7 @@ def getMass(x):
 		multiplier = 1
 	else:
 		multiplier = float(number[0])
-	atomic_mass=float(matrix(PeriodicTable[atom[0]][2])*transpose(matrix(PeriodicTable[atom[0]][3])))
+	atomic_mass=float((matrix(PeriodicTable[atom[0]][2])*transpose(matrix(PeriodicTable[atom[0]][3]))).flat[0])
 # That's right -- the molecular weight is based	on the isotopes and ratios
 	return (atomic_mass*multiplier)
 
