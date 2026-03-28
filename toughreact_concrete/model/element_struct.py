@@ -25,136 +25,9 @@ import toughreact_concrete.model.post as post
 #import  toughreact_concrete.model.t2R_chemical as t2R_chemical
 import toughreact_concrete.model.t2R_savechem as t2R_savechem
 import toughreact_concrete.model.toughreact as toughreact
-from toughreact_concrete.geometry_trc import constrgeom
 from toughreact_concrete.model.conversion_species import *
+from toughreact_concrete.model.mesh import Mesh  # noqa: F401 — re-exported for backwards compat
 
-
-class Mesh:
-    
-    def __init__(self, geom, CL, ep_couche_limite=20e-2):
-        self.len_eau = geom[0]['points'][0][0]
-        self.hauteur = geom[0]['elements']['Y'][0]
-        #self.dims = dims
-        self.num_elem = {'X':len(geom[0]['elements']['X']),'Y':len(geom[0]['elements']['Y']),'Z':len(geom[0]['elements']['Z'])}
-        self.ep_couche_limite = ep_couche_limite
-        self.CL = CL
-
-        self.abscisses_x_txt =''
-        #self.construct_mesh(geom)
-        self.geo = t2grids.mulgrid()#self.build_mesh(mesh_type, dims, num_elem)
-
-    def construct_mesh(self, geom):
-        pos_dx, pos_dy, pos_dz = [], [], []
-        for elem in geom:
-            pos_dx += elem['elements']['X']
-        pos_dy += elem['elements']['Y']
-        pos_dz += elem['elements']['Z']
-        #Addition of elements participating in possible boundary conditions
-        if len(self.CL) > 0:
-            if self.CL['maree']:
-                for elem in self.CL['maree']:
-                    if elem == 'left':
-                        pos_dx.insert(0,-self.ep_couche_limite) #left column !!!!!!!!!!!!!!! Not true if water thickness
-                        self.num_elem['X'] = self.num_elem['X'] + 1
-                    if elem == 'right':
-                        pos_dx.append(self.ep_couche_limite) #right column
-                        self.num_elem['X'] = self.num_elem['X'] + 1
-                    if elem == 'top':
-                        pos_dy.insert(0,self.ep_couche_limite) #top column
-                    if elem == 'bottom':
-                        pos_dy.append(self.ep_couche_limite) #bottom column
-            if 'infini' in self.CL:
-                for elem in self.CL['infini']:
-                    if elem == 'left':
-                        pos_dx.insert(0,5e-5) #left column
-                        self.num_elem['X'] = self.num_elem['X'] + 1
-                    if elem == 'right':
-                        pos_dx.append(5e-5) #right column
-                        self.num_elem['X'] = self.num_elem['X'] + 1
-                    if elem == 'top':
-                        pos_dy.insert(0,geom[-1]['elements']['Y']) #top column
-                    if elem == 'bottom':
-                        pos_dy.append(geom[-1]['elements']['Y']) #bottom column
-        
-        #******************************************
-        #-----------------  Ecriture des abscisses dans un fichier ----------------
-        abscisses_x = [geom[0]['points'][0][0]-pos_dx[0]/2.]
-        abscisses_x_txt = "X\n"+str(abscisses_x[-1])+"\n"
-        i=1
-        for elem in pos_dx[1:]:
-            abscisses_x.append(abscisses_x[-1]+pos_dx[i-1]/2.+elem/2.)
-            abscisses_x_txt += str(abscisses_x[-1])+"\n"
-            i += 1
-        
-        self.abscisses_x_txt = abscisses_x_txt
-        #print pos_dy, sum(pos_dy[1:-1])
-#         geo=t2grids.mulgrid().rectangular(pos_dx, [1.0], pos_dy, convention=1,\
-#                                           origin =[0,0,sum(pos_dy[1:])])
-        geo=t2grids.mulgrid().rectangular(pos_dx, pos_dy, pos_dz, \
-                                              origin =[0,0,self.hauteur])#geom[0]['points'][0][0],geom[0]['points'][0][1],geom[0]['points'][0][2]])
-        #geo.slice_plot()#(block_names=' ')
-        #geo.write('2Dgrd.dat')
-        self.geo = geo
-    
-    def build_mesh(self, mesh_type, dims, num_elem):
-        if mesh_type['name'] == "geometric_prog":
-            pos_dx = constrgeom.suite_geom(dims['X'],num_elem['X'], mesh_type['common_ratio'])
-            pos_dy = constrgeom.suite_geom(dims['Y'],num_elem['Y'], mesh_type['common_ratio'])
-        else:
-            pos_dx = [float(dims['X'])/float(num_elem['X'])]*num_elem['X']
-            pos_dy = [float(dims['Y'])/float(num_elem['Y'])]*num_elem['Y']
-        #pos_dy = [dims['Y']/float(num_elem['Y'])]*num_elem['Y']
-        #Addition of elements participating in possible boundary conditions
-        if len(self.CL) > 0:
-            if self.CL['maree']:
-                for elem in self.CL['maree']:
-                    if elem == 'left':
-                        pos_dx.insert(0,self.ep_couche_limite) #left column
-                    if elem == 'right':
-                        pos_dx.append(self.ep_couche_limite) #right column
-                    if elem == 'top':
-                        pos_dy.insert(0,self.ep_couche_limite) #top column
-                    if elem == 'bottom':
-                        pos_dy.append(self.ep_couche_limite) #bottom column
-            if 'infini' in self.CL:
-                for elem in self.CL['infini']:
-                    if elem == 'left':
-                        pos_dx.insert(0,5e-5) #left column
-                    if elem == 'right':
-                        pos_dx.append(5e-5) #right column
-                    if elem == 'top':
-                        pos_dy.insert(0,dims['Y']) #top column
-                    if elem == 'bottom':
-                        pos_dy.append(dims['Y']) #bottom column
-        
-        #******************************************
-        #-----------------  Ecriture des abscisses dans un fichier ----------------
-        abscisses_x = [-pos_dx[0]/2.]
-        abscisses_x_txt = "X\n"+str(abscisses_x[-1])+"\n"
-        somme = 0#-pos_dx[0]
-        for elem in pos_dx[1:]:
-            abscisses_x.append(somme+elem/2.)
-            abscisses_x_txt += str(abscisses_x[-1])+"\n"
-            somme += elem
-        
-        self.abscisses_x_txt = abscisses_x_txt
-        #print pos_dy, sum(pos_dy[1:-1])
-#         geo=t2grids.mulgrid().rectangular(pos_dx, [1.0], pos_dy, convention=1,\
-#                                           origin =[0,0,sum(pos_dy[1:])])
-        if float(num_elem['Y']) < 40:
-            geo=t2grids.mulgrid().rectangular(pos_dx, pos_dy, [1.0], \
-                                              origin =[0,0,sum(pos_dy[1:])])
-        else:
-            geo=t2grids.mulgrid().rectangular(pos_dx, pos_dy, [1.0], pos_dy, convention=1,\
-                                              origin =[0,0,sum(pos_dy[1:])])
-        #geo.slice_plot()#(block_names=' ')
-        #geo.write('2Dgrd.dat')
-        self.geo = geo
-        
-    def write_mesh_x(self):
-        fichier_pos = open('OUTPUT/Pos_x.txt', 'w')
-        fichier_pos.write(self.abscisses_x_txt)
-        fichier_pos.close()
 
 class Model:
     def __init__(self, mesh):
@@ -293,8 +166,7 @@ class Model:
                 self.list_material.append(material)
                 self.list_cementitious_material.append(material)
         else:
-            i = 1
-            for blk in self.dat.grid.blocklist:
+            for i, blk in enumerate(self.dat.grid.blocklist, start=1):
                 nom_mat = 'B%4d'%i
                 tmp_beton = mat_ciment.MateriauCimentaire(nom_mat)
                 tmp_beton.formulation = material.formulation
@@ -310,7 +182,6 @@ class Model:
                 blk.rocktype=tmp_beton
                 self.list_material.append(tmp_beton)
                 self.list_cementitious_material.append(material)
-                i += 1
         return
         
     def add_bc(self, BC, location):
@@ -375,17 +246,14 @@ class Model:
   
 
     def solve_method(self):
-        if self.eos == "eos3" or self.eos == "eos4":
-            self.dat.multi={'num_components':2,'num_equations':3,'num_phases':2,'num_secondary_parameters':8}
-        #eco2n
-        if self.eos == "eco2n":
-            self.dat.multi={'num_components':3,'num_equations':4,'num_phases':3,'num_secondary_parameters':8}
-        #eos7
-        if self.eos == "eos7":
-            self.dat.multi={'num_components':3,'num_equations':4,'num_phases':2,'num_secondary_parameters':8}
-        #eos9
-        if self.eos == "eos9":
-            self.dat.multi={'num_components':1,'num_equations':1,'num_phases':1,'num_secondary_parameters':6}
+        _EOS_MULTI = {
+            'eos3':  {'num_components':2,'num_equations':3,'num_phases':2,'num_secondary_parameters':8},
+            'eos4':  {'num_components':2,'num_equations':3,'num_phases':2,'num_secondary_parameters':8},
+            'eco2n': {'num_components':3,'num_equations':4,'num_phases':3,'num_secondary_parameters':8},
+            'eos7':  {'num_components':3,'num_equations':4,'num_phases':2,'num_secondary_parameters':8},
+            'eos9':  {'num_components':1,'num_equations':1,'num_phases':1,'num_secondary_parameters':6},
+        }
+        self.dat.multi = _EOS_MULTI[self.eos]
 
     
     def tough_params(self):
@@ -495,40 +363,15 @@ class Model:
                 if elem in self.list_material[0].species.keys():
                     del self.list_material[0].species[elem]
             #self.list_material[0].species, self.list_material[0].minerals = toughreact.calcul_equilibre_toughreact_minerals(self.list_material[0].minerals,self.list_material[0].species)
-            init_species_inter = {}#self.list_material[0].species
-            init_minerals = {}#self.list_material[0].minerals
-            init_species_inter,init_minerals=toughreact.calcul_equilibre_mineraux(self.list_material[0],
-                                                                                  self.database,
-                                                                                  False,#complexation
-                                                                                  True,#kinetics
-                                                                                  False)#updateporosity #self.complexation)
-            #self.list_material[0].species['h+'] = init_species_inter['h+']
-            for elem in init_species_inter.keys():
-                elem_database = convert_ionic_species(elem, self.database)
-                if elem_database not in ['H2O','Na+','K+']:
-                    self.list_material[0].species[elem_database] = init_species_inter[elem]
-            init_species_inter,init_minerals=toughreact.calcul_equilibre_mineraux(self.list_material[0],
-                                                                                  self.database,
-                                                                                  self.complexation,
-                                                                                  self.kinetics,#False,#
-                                                                                  False)
-                                                                                  #self.complexation,
-                                                                                  #self.kinetics)
-            for elem in init_species_inter.keys():
-                elem_database = convert_ionic_species(elem, self.database)
-                if elem_database not in ['H2O','Na+','K+']:
-                    self.list_material[0].species[elem_database] = init_species_inter[elem]
-            init_species_inter,init_minerals=toughreact.calcul_equilibre_mineraux(self.list_material[0],
-                                                                                  self.database,
-                                                                                  self.complexation,
-                                                                                  self.kinetics,#False,#
-                                                                                  False)
-                                                                                  #self.complexation,
-                                                                                  #self.kinetics)
-            for elem in init_species_inter.keys():
-                elem_database = convert_ionic_species(elem, self.database)
-                if elem_database not in ['H2O','Na+','K+']:
-                    self.list_material[0].species[elem_database] = init_species_inter[elem]
+            # First pass: no complexation, to initialise species
+            init_species_inter, init_minerals = toughreact.calcul_equilibre_mineraux(
+                self.list_material[0], self.database, False, True, False)
+            self._apply_equilibre_species(init_species_inter)
+            # Two iterative passes with full settings (convergence)
+            for _ in range(2):
+                init_species_inter, init_minerals = toughreact.calcul_equilibre_mineraux(
+                    self.list_material[0], self.database, self.complexation, self.kinetics, False)
+                self._apply_equilibre_species(init_species_inter)
         else:
             init_species_inter, init_minerals = self.list_material[0].hydration_equilibrium()
         
@@ -594,20 +437,8 @@ class Model:
         self.dat.output_times = {'num_times_specified':len(time_output),'time':time_output}
         #self.dat.incon[str(blk)] = [None, self.input_BC_maree(self.eos,BC.P_atm[0],BC.temperature_eau[0])]
         self.dat.write('flow.inp')
-        #------------------- Ajout de la partie toughreact dans flow.inp
-        if self.pitzer:
-            txt_flow_react = "REACT----1MOPR(20)-2----*----3----*----4----*----5----*----6----*----7----*----8\n00021000200201\nENDCY"""
-        else:
-            txt_flow_react = "REACT----1MOPR(20)-2----*----3----*----4----*----5----*----6----*----7----*----8\n00021004\nENDCY"""
-        result=open("flow.inp").read().replace("ENDCY", txt_flow_react)
-        open("flow.inp","w").write(result)
-        
-        if self.eos == 'eos9':
-            #txt_refco = "REFCO       101300.0      " + str(self.temperature_isotherme) + "\t\n\nPARAM"
-            txt_refco = "REFCO       101300.0      " + f'{self.temperature_isotherme:>4}' + "\t\n\nPARAM"
-            result=open("flow.inp").read().replace("\nPARAM", txt_refco)
-            open("flow.inp","w").write(result)
-        
+        self._patch_flow_inp()
+
         ###############################################################################
         self._save_mesh()
         
@@ -709,18 +540,7 @@ class Model:
         self.dat.parameter['tstop'] = time_output[-1]-time_input[-1]#time_output[-1]#86400#time_output[-1]-self.dat.parameter['tstop']#
         #print(self.dat.parameter['tstop'])
         self.dat.write('flow.inp')
-        #------------------- Ajout de la partie toughreact dans flow.inp
-        if self.pitzer:
-            txt_flow_react = "REACT----1MOPR(20)-2----*----3----*----4----*----5----*----6----*----7----*----8\n00021000200201\nENDCY"""
-        else:
-            txt_flow_react = "REACT----1MOPR(20)-2----*----3----*----4----*----5----*----6----*----7----*----8\n00021004\nENDCY"""
-        result=open("flow.inp").read().replace("ENDCY", txt_flow_react)
-        open("flow.inp","w").write(result)
-        if self.eos == 'eos9':
-            #txt_refco = "REFCO       101300.0      " + str(self.temperature_isotherme) + "\t\n\nPARAM"
-            txt_refco = "REFCO       101300.0      " + f'{self.temperature_isotherme:>4}' + "\t\n\nPARAM"
-            result=open("flow.inp").read().replace("\nPARAM", txt_refco)
-            open("flow.inp","w").write(result)
+        self._patch_flow_inp()
 
     def _update_bc_maree(self, location, incr, inc):
         #########Calculation of submerged elements
@@ -833,10 +653,7 @@ class Model:
         composition_solution_lower = {}
         for elem in bnd_solution.keys():
             composition_solution_lower[elem.lower()] = bnd_solution[elem]
-        if location == 'left':
-            indice = 0
-        if location == 'right':
-            indice = -1
+        indice = {'left': 0, 'right': -1}[location]
         i = 0
         for elem in list_ordonnee:
             if elem in self.species.keys():
@@ -857,6 +674,26 @@ class Model:
             savechem.contenu['UT_species'][0][-1] = 0.64364915E-03
             savechem.contenu['UT_species'][0][-2] = 0.64169060E-02
         savechem.write_savechem('inchem')
+
+    def _patch_flow_inp(self):
+        '''Appends the REACT block to flow.inp and optionally inserts the REFCO section for eos9'''
+        mopr = "00021000200201" if self.pitzer else "00021004"
+        txt_react = ("REACT----1MOPR(20)-2----*----3----*----4----*----5----*----6----*----7----*----8\n"
+                     + mopr + "\nENDCY")
+        content = open("flow.inp").read().replace("ENDCY", txt_react)
+        open("flow.inp", "w").write(content)
+        if self.eos == 'eos9':
+            txt_refco = f"REFCO       101300.0      {self.temperature_isotherme:>4}\t\n\nPARAM"
+            content = open("flow.inp").read().replace("\nPARAM", txt_refco)
+            open("flow.inp", "w").write(content)
+
+    def _apply_equilibre_species(self, init_species_inter):
+        '''Updates the species of the first material from an equilibrium result,
+        excluding H2O, Na+ and K+.'''
+        for elem, value in init_species_inter.items():
+            elem_database = convert_ionic_species(elem, self.database)
+            if elem_database not in ['H2O', 'Na+', 'K+']:
+                self.list_material[0].species[elem_database] = value
 
     def _initialize_restart(self):
         '''Transforms the result files from a first calculation into initial

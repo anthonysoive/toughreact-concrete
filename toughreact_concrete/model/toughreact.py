@@ -14,23 +14,6 @@ import t2data
 import toughreact_concrete.model.post as post
 from toughreact_concrete.model.conversion_species import *
 
-# jennite = 'JENNITE'
-# tobermorite = 'TOBERMORITE'
-# feoh3 = 'Ferrihydrite(2L)'
-# monosulfoaluminate = 'MONOSULFOALUMINATE'
-# ettringite = 'ETTRINGITE'
-# hydrotalcite = 'HYDROTALCITE'
-# portlandite = 'PORTLANDITE'
-# friedel_salt = 'FRIEDEL_SALT'
-# brucite = 'BRUCITE'
-# calcite = 'CALCITE'
-# monocarboaluminate = 'MONOCARBOALUMINATE'
-# c3as084h432 = 'C3AS0.84H4.32'
-# kuzel_salt = 'KUZEL_SALT'
-# c3ah6 = 'C3AH6'
-# gypsum = 'GYPSUM'
-##Removing dolomite, magnesite, gibbsite, chrysotile, anhydrite
-##Removing 'gypsum' in the presence of seawater
 list_minerals_kinetics = ['JENNITE', 'TOBERMORITE', 'MONOSULFOALUMINATE',
                           'ETTRINGITE', 'HYDROTALCITE', 'PORTLANDITE', 'FRIEDEL_SALT', 'BRUCITE',
                           'CALCITE', 'MONOCARBOALUMINATE', 'ARAGONITE',
@@ -115,8 +98,7 @@ def lecture_database(database):
     dict_minerals = {}
     minerals_name = ''
     number_null = 0
-    #with open(rep_result_cerema+"thermodatabase.out","r") as fichier:
-    chemin_database = '..\\Calcul\\' + database
+    chemin_database = os.path.join('..', 'Calcul', database)
     with open(chemin_database) as fichier:
         for line in fichier:
             if number_null == 2:
@@ -146,29 +128,21 @@ def species2toughreact(species):
         }
     return dict_species
 
-def ecriture_flow(temp,porosity):
-#    if boundary:
-#        tmp_result=open("trame_flow_boundary.inp","r").read().replace("TITRE\n", "")
-#    else:
-#        tmp_result=open("trame_flow.inp","r").read().replace("TITRE\n", "")
-    tmp_result=open("trame_flow.inp").read().replace("TITRE\n", "")
-    temperature = (4 - len(str(temp))) * ' ' + str(temp)
-    result=tmp_result.replace("TEMP", temperature)
-    porosity = (8 - len(str(porosity))) * ' ' + str(porosity)
-    result=result.replace("POROSITY", porosity)
-    tortuosity = (10 - len(str(TORTUOSITY))) * ' ' + str(TORTUOSITY)
-    result=result.replace("TORTUOSITY", tortuosity)
-    liquid_pressure = (11 - len(str(LIQUID_PRESSURE))) * ' ' + str(LIQUID_PRESSURE)
-    result=result.replace("PRESSURELIQ", liquid_pressure)
-    open("flow.inp","w").write(result)
+def ecriture_flow(temp, porosity, tortuosity=TORTUOSITY, liquid_pressure=LIQUID_PRESSURE):
+    with open("trame_flow.inp") as f:
+        tmp_result = f.read().replace("TITRE\n", "")
+    result = tmp_result.replace("TEMP", f"{temp:>4}")
+    result = result.replace("POROSITY", f"{porosity:>8}")
+    result = result.replace("TORTUOSITY", f"{tortuosity:>10}")
+    result = result.replace("PRESSURELIQ", f"{liquid_pressure:>11}")
+    with open("flow.inp", "w") as f:
+        f.write(result)
 
-def ecriture_solute(nb_species, nb_minerals, database, type_eq, complexation=True,update_porosity=True, D_eff=DIFF_COEFF_WATER, porosite=1.0):
+def ecriture_solute(nb_species, nb_minerals, database, type_eq, complexation=True, update_porosity=True, D_eff=DIFF_COEFF_WATER, porosite=1.0, rcour=RCOUR):
     if complexation:
         nb_complexes = 0
         for comp in list_complexes:
             nb_complexes += num_complexes_by_mineral[database][comp]
-        # if 'monosulfoaluminate' in list_complexes:
-        #     nb_complexes -= 5 #-7+2
     else:
         nb_complexes = 0
     if nb_minerals == 0:
@@ -192,11 +166,8 @@ def ecriture_solute(nb_species, nb_minerals, database, type_eq, complexation=Tru
     if complexation:
         for i in range(nb_complexes):
             num_complexes += str(i+1) + "    "
-#    if boundary:
-#        result=open(trame_file,"r").read().replace("NB_SPECIES", str(nb_species))
-#        result=result.replace("NUM_SPECIES", num_species)
-#    else:
-    result=open("trame_solute.inp").read().replace("NB_SPECIES", str(nb_species))
+    with open("trame_solute.inp") as f:
+        result = f.read().replace("NB_SPECIES", str(nb_species))
     if update_porosity:
         result=result.replace("UPDATE_PORO", str(1))
     else:
@@ -206,220 +177,157 @@ def ecriture_solute(nb_species, nb_minerals, database, type_eq, complexation=Tru
     result=result.replace("NUM_SPECIES", num_species)
     result=result.replace("NUM_MINERALS", num_minerals)
     result=result.replace("DATABASE", database)
-    result=result.replace("RCOUR", str(RCOUR))
-    #result=result.replace("DIFF_COEFF_WATER", str(DIFF_COEFF_WATER))
+    result=result.replace("RCOUR", str(rcour))
     tortuosite = porosite**0.33 #Millington and Quirk, 1961
     result=result.replace("DIFF_COEFF", str(D_eff/tortuosite/porosite))
     result=result.replace("DEFAULT_CHEM_PROP", default_chem_prop)
     result=result.replace("BND_CHEM_PROP", bnd_chem_prop)
     result=result.replace("NUM_COMPLEXES", num_complexes)
-    open("solute.inp","w").write(result)
+    with open("solute.inp", "w") as f:
+        f.write(result)
 
 
-#def ecriture_chemical_sol_inter(minerals,species,temperature):
-#    new_species = {}
-#    for elem in species:
-#        new_species[elem] = {'guess':species[elem],'ctotal':species[elem]}
-#    ecriture_chemical_equilibre(minerals,new_species,temperature)
+def _build_species_declaration_txt(list_ordonnee, species, complexation, database, extra_species=None, msh=MSH):
+    '''Build SPECIES_0_TXT block (species declaration + surface complexes).
 
-def ecriture_chemical_equilibre(database,minerals_list,species,temperature,complexation,kinetics):
-    minerals, list_ordonnee = conversion_database(database, minerals_list)
-    txt_minerals_0 = declare_minerals(database,minerals,kinetics)
-    txt_minerals = declare_minerals_init(database,minerals,kinetics)
-    #Declaration of ionic species
-    txt_species_0 = ''
-    #for elem in self.init_species.keys():
-    #choice of the ordered list based on the database
+    extra_species: optional list of additional species names not covered by list_ordonnee
+                   (used in reactive transport to include species outside the ordered list).
+    '''
+    species_upper = {k.upper() for k in species}
+    txt = ''
     for elem in list_ordonnee:
-        if elem.upper() in [tmp.upper() for tmp in species.keys()]:
-            txt_species_0 += "'" + elem + "'      0\n"
+        if elem.upper() in species_upper:
+            txt += f"'{elem}'      0\n"
+    if extra_species:
+        for elem in extra_species:
+            if elem.lower() not in list_ordonnee:
+                txt += f"'{elem}'      0\n"
     if complexation:
         for complexe in list_complexes:
-            txt_species_0 += "'"+name_complexe_database[complexe]+"'       2  '"+mineral_database[database][complexe.upper()]+"' "+str(surface_site_density[complexe])+"  3 \n"
-        # txt_species_0 += "'CSH_OH'       2  '"+mineral_database[database]['JENNITE']+"' "+str(surface_site_density["jennite"])+"  0 \n"
-        # txt_species_0 += "'CSH_OH1'      2  '"+mineral_database[database]['TOBERMORITE']+"' "+str(surface_site_density["tobermorite"])+"  0 \n"
-        # txt_species_0 += "'POR_OH'       2  '"+mineral_database[database]['PORTLANDITE']+"' "+str(surface_site_density["portlandite"])+"  0 \n"
-        # txt_species_0 += "'MON'       2  '"+mineral_database[database]['MONOSULFOALUMINATE']+"' "+str(surface_site_density["monosulfoaluminate"])+"  0 \n"
-        if MSH:
-            txt_species_0 += "'MSH'           2  '"+mineral_database[database]['HYDROTALCITE']+"' "+str(surface_site_density["msh"])+"  3 \n"
-    
-    txt_species_0 += "'*'"
-    txt_species = ''
-    for elem in species.keys():
-        if elem.upper() == 'H+':
-#         if elem == 'oh-':
-            txt_species += "'" + elem + "'    1    "+str(species[elem]['guess'])+"    "+str(species[elem]['ctotal'])+"  '*'   0.0 \n"
-        else:
-            if species[elem] == 0:
-                species[elem] = 1.0e-20
-            txt_species += "'" + elem + "'    1    "+str(species[elem]['guess'])+"    "+str(species[elem]['ctotal'])+"  '*'   0.0 \n"
-    if complexation:
-        for complexe in list_complexes:
-            if name_complexe_database[complexe].lower() not in species.keys():
-                # txt_species += "'"+name_complexe_database[complexe].lower()+"     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-                txt_species += "'"+name_complexe_database[complexe].lower()+"     ' 1   1.0E-20 1.0E-20  '*'   0.0\n"
-        # if not ('csh_oh' in species.keys() or 'csh_oh1' in species.keys() or 'por_oh' in species.keys() or 'mon' in species.keys()):
-        #     txt_species += "'csh_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'csh_oh1    ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'por_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'mon     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        if MSH:
-            txt_species += "'MSH'           1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-    txt_species += "'*'"
-    
-    txt_adsorption = ''
-    if complexation:
-        txt_adsorption += "1               !ndtype= number of sorption zones \n"
-        txt_adsorption += "# zone       ad.surf.(cm2/g)  total ad.sites (mol/m2)\n"
-        txt_adsorption += "1  1    ! zone index, equilibration flag\n"
-        for complexe in list_complexes:
-            txt_adsorption += "'"+name_complexe_database[complexe]+"'           0    "+str(specific_surface_area[complexe])+" \n"
-        # txt_adsorption += "'CSH_OH'           0    "+str(specific_surface_area["jennite"])+" \n"
-        # txt_adsorption += "'CSH_OH1'          0    "+str(specific_surface_area["tobermorite"])+" \n"
-        # txt_adsorption += "'POR_OH'           0    "+str(specific_surface_area["portlandite"])+" \n"
-        # txt_adsorption += "'MON'           0    "+str(specific_surface_area["monosulfoaluminate"])+" \n"
-        if MSH:
-            txt_adsorption += "'MSH'          0    "+str(specific_surface_area["msh"])+" \n"
-    txt_adsorption += '*'
-    
-    result=open("trame_chemical.inp").read().replace("MINERALS_0_TXT", txt_minerals_0)
-    result=result.replace("MINERALS_TXT", txt_minerals)
-    result=result.replace("SPECIES_0_TXT", txt_species_0)
-    result=result.replace("SPECIES_TXT", txt_species)
-    result=result.replace("TEMP", str(temperature))
-    result=result.replace("ADSORPTION_TXT", txt_adsorption)
-    open("chemical.inp","w").write(result)
+            db_mineral = mineral_database[database][complexe.upper()]
+            density = surface_site_density[complexe]
+            txt += f"'{name_complexe_database[complexe]}'       2  '{db_mineral}' {density}  3 \n"
+        if msh:
+            db_mineral = mineral_database[database]['HYDROTALCITE']
+            txt += f"'MSH'           2  '{db_mineral}' {surface_site_density['msh']}  3 \n"
+    txt += "'*'"
+    return txt
 
-def ecriture_chemical_transport_reactif(database, material,bnd_solution,complexation,kinetics):
+
+def _build_species_values_txt(species_dict, complexation, missing_complexe_init='1.0E-20 1.0E-20', msh=MSH):
+    '''Build SPECIES_TXT block (guess/ctotal values per species + surface complexes).
+
+    missing_complexe_init: "guess ctotal" string used when a surface complex is absent
+                           from species_dict. Defaults to near-zero for equilibrium runs;
+                           use '0.6416E-01  0.7477E+00' for reactive transport runs.
+    '''
+    existing_upper = {k.upper() for k in species_dict}
+    txt = ''
+    for elem, val in species_dict.items():
+        txt += f"'{elem}'    1    {val['guess']}    {val['ctotal']}  '*'   0.0 \n"
+    if complexation:
+        for complexe in list_complexes:
+            if name_complexe_database[complexe].upper() not in existing_upper:
+                txt += f"'{name_complexe_database[complexe]}     ' 1   {missing_complexe_init}  '*'   0.0\n"
+        if msh:
+            txt += "'MSH'           1   0.6416E-01  0.7477E+00  '*'   0.0\n"
+    txt += "'*'"
+    return txt
+
+
+def _build_adsorption_txt(complexation, msh=MSH):
+    '''Build ADSORPTION_TXT block (surface complexation zones).'''
+    txt = ''
+    if complexation:
+        txt += "1               !ndtype= number of sorption zones \n"
+        txt += "# zone       ad.surf.(cm2/g)  total ad.sites (mol/m2)\n"
+        txt += "1  1    ! zone index, equilibration flag\n"
+        for complexe in list_complexes:
+            txt += f"'{name_complexe_database[complexe]}'           0    {specific_surface_area[complexe]} \n"
+        if msh:
+            txt += f"'MSH'          0    {specific_surface_area['msh']} \n"
+    txt += '*'
+    return txt
+
+
+def ecriture_chemical_equilibre(database, minerals_list, species, temperature, complexation, kinetics):
+    minerals, list_ordonnee = conversion_database(database, minerals_list)
+    txt_minerals_0 = declare_minerals(database, minerals, kinetics)
+    txt_minerals = declare_minerals_init(database, minerals, kinetics)
+    txt_species_0 = _build_species_declaration_txt(list_ordonnee, species, complexation, database)
+    txt_species = _build_species_values_txt(species, complexation)
+    txt_adsorption = _build_adsorption_txt(complexation)
+    with open("trame_chemical.inp") as f:
+        result = f.read().replace("MINERALS_0_TXT", txt_minerals_0)
+    result = result.replace("MINERALS_TXT", txt_minerals)
+    result = result.replace("SPECIES_0_TXT", txt_species_0)
+    result = result.replace("SPECIES_TXT", txt_species)
+    result = result.replace("TEMP", str(temperature))
+    result = result.replace("ADSORPTION_TXT", txt_adsorption)
+    with open("chemical.inp", "w") as f:
+        f.write(result)
+
+def ecriture_chemical_transport_reactif(database, material, bnd_solution, complexation, kinetics):
     minerals, list_ordonnee = conversion_database(database, material.minerals)
-    #minerals = material.minerals
     species = material.species
     temperature = material.temperature
     temperature_solution = bnd_solution['temperature']
-    txt_minerals_0 = declare_minerals(database,minerals,kinetics)
-    txt_minerals = declare_minerals_init(database,minerals,kinetics)
-    #Declaration of ionic species
-    txt_species_0 = ''
+    txt_minerals_0 = declare_minerals(database, minerals, kinetics)
+    txt_minerals = declare_minerals_init(database, minerals, kinetics)
+
+    complex_names_lower = {name_complexe_database[c].lower() for c in name_complexe_database}
+    extra_species = [x for x in material.species if x not in complex_names_lower]
+    txt_species_0 = _build_species_declaration_txt(
+        list_ordonnee, species, complexation, database, extra_species=extra_species
+    )
+
     txt_Kd_0 = ''
-    #for elem in self.init_species.keys():
-    key_species_upper = [tmp.upper() for tmp in species.keys()]
-    for elem in list_ordonnee:
-        if elem.upper() in [tmp.upper() for tmp in species.keys()]:
-            txt_species_0 += "'" + elem + "'      0\n"
-    #for elem in [x for x in material.species if x not in ['csh_oh', 'csh_oh1', 'por_oh', 'mon']]:
-    for elem in [x for x in material.species if x not in [name_complexe_database[complexe_name].lower() for complexe_name in name_complexe_database]]:
-        if elem.lower() not in list_ordonnee:
-            txt_species_0 += "'" + elem + "'      0\n"
-    if complexation:
-        for complexe in list_complexes:
-            txt_species_0 += "'"+name_complexe_database[complexe]+"'       2  '"+mineral_database[database][complexe.upper()]+"' "+str(surface_site_density["jennite"])+"  3 \n"
-        # txt_species_0 += "'CSH_OH'       2  '"+mineral_database[database]['JENNITE']+"' "+str(surface_site_density["jennite"])+"  3 \n"
-        # txt_species_0 += "'CSH_OH1'      2  '"+mineral_database[database]['TOBERMORITE']+"' "+str(surface_site_density["tobermorite"])+"  3 \n"
-        # txt_species_0 += "'POR_OH'       2  '"+mineral_database[database]['PORTLANDITE']+"' "+str(surface_site_density["portlandite"])+"  3 \n"
-        # txt_species_0 += "'MON'       2  '"+mineral_database[database]['MONOSULFOALUMINATE']+"' "+str(surface_site_density["monosulfoaluminate"])+"  3 \n"
-    else:
+    if not complexation:
         txt_Kd_0 += "'Cl-'                0.0d0        0.0  0.0     ! with only Kd\n"
-    if MSH:
-        txt_species_0 += "'MSH'           2  '"+mineral_database[database]['HYDROTALCITE']+"' "+str(surface_site_density["msh"])+"  3 \n"
-    
-    txt_species_0 += "'*'"
     txt_Kd_0 += "'*'"
-    txt_species = ''
-    for elem in species.keys():
-        if elem.upper() == 'H+':
-            txt_species += "'" + elem + "'    1    "+str(species[elem]['guess'])+"    "+str(species[elem]['ctotal'])+"  '*'   0.0 \n"
-        else:
-            if species[elem] == 0:
-                species[elem] = 1.0e-20
-            txt_species += "'" + elem + "'    1    "+str(species[elem]['guess'])+"    "+str(species[elem]['ctotal'])+"  '*'   0.0 \n"
-    if complexation:
-        for complexe in list_complexes:
-            if name_complexe_database[complexe] not in key_species_upper:
-                txt_species += "'"+name_complexe_database[complexe]+"     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        # if not ('csh_oh'.upper() in key_species_upper or 'csh_oh1'.upper() in key_species_upper or 'por_oh'.upper() in key_species_upper or 'mon'.upper() in key_species_upper):
-        #     txt_species += "'csh_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'csh_oh1    ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'por_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species += "'mon     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        if MSH:
-            txt_species += "'MSH'           1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-    txt_species += "'*'"
-    
-    txt_species_bnd = ''
-    for elem in species.keys():
-        if elem.upper() == 'H+':
-            txt_species_bnd += "'" + elem + "'    1    "+str(bnd_solution['composition'][elem]['guess'])+"    "+str(bnd_solution['composition'][elem]['ctotal'])+"  '*'   0.0 \n"
-        else:
-            if species[elem] == 0:
-                species[elem] = 1.0e-20
-            txt_species_bnd += "'" + elem + "'    1    "+str(bnd_solution['composition'][elem]['guess'])+"    "+str(bnd_solution['composition'][elem]['ctotal'])+"  '*'   0.0 \n"
-    if complexation:
-        for complexe in list_complexes:
-            if name_complexe_database[complexe] not in key_species_upper:
-                txt_species_bnd += "'"+name_complexe_database[complexe]+"     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        # if not ('csh_oh'.upper() in key_species_upper or 'csh_oh1'.upper() in key_species_upper or 'por_oh'.upper() in key_species_upper or 'mon'.upper() in key_species_upper):
-        #     txt_species_bnd += "'csh_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species_bnd += "'csh_oh1    ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species_bnd += "'por_oh     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        #     txt_species_bnd += "'mon     ' 1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-        if MSH:
-            txt_species_bnd += "'MSH'           1   0.6416E-01  0.7477E+00  '*'   0.0\n"
-    txt_species_bnd += "'*'"
-    
-    txt_adsorption = ''
-    if complexation:
-        txt_adsorption += "1               !ndtype= number of sorption zones \n"
-        txt_adsorption += "# zone       ad.surf.(cm2/g)  total ad.sites (mol/m2)\n"
-        txt_adsorption += "1  1    ! zone index, equilibration flag\n"
-        for complexe in list_complexes:
-            txt_adsorption += "'"+name_complexe_database[complexe]+"'           0    "+str(specific_surface_area[complexe])+" \n"
-        # txt_adsorption += "'CSH_OH'           0    "+str(specific_surface_area["jennite"])+" \n"
-        # txt_adsorption += "'CSH_OH1'          0    "+str(specific_surface_area["tobermorite"])+" \n"
-        # txt_adsorption += "'POR_OH'           0    "+str(specific_surface_area["portlandite"])+" \n"
-        # txt_adsorption += "'MON'           0    "+str(specific_surface_area["monosulfoaluminate"])+" \n"
-        if MSH:
-            txt_adsorption += "'MSH'          0    "+str(specific_surface_area["msh"])+" \n"
-    txt_adsorption += '*'
-    
+
+    txt_species = _build_species_values_txt(
+        species, complexation, missing_complexe_init='0.6416E-01  0.7477E+00'
+    )
+    bnd_composition = {elem: bnd_solution['composition'][elem] for elem in species}
+    txt_species_bnd = _build_species_values_txt(
+        bnd_composition, complexation, missing_complexe_init='0.6416E-01  0.7477E+00'
+    )
+    txt_adsorption = _build_adsorption_txt(complexation)
+
     txt_Kd = ''
     if not complexation:
         txt_Kd += "1                    !kdtpye=number of Kd zones \n"
         txt_Kd += "1                    !idtype \n"
         txt_Kd += "#'species   solid-density(Sden,kg/dm**3)  Kd(l/kg=mass/kg solid / mass/l' #0.1124 \n"
-        txt_Kd += "'cl-'    2.4166666666666665    "+str(material.indicateurs_deduits['cl_adsorption_csh'])+" \n"
+        txt_Kd += f"'cl-'    2.4166666666666665    {material.indicateurs_deduits['cl_adsorption_csh']} \n"
     txt_Kd += '*'
-    
-    result=open("trame_chemical_reactive_transport.inp").read().replace("MINERALS_0_TXT", txt_minerals_0)
-    result=result.replace("MINERALS_TXT", txt_minerals)
-    result=result.replace("SPECIES_0_TXT", txt_species_0)
-    result=result.replace("ADSORPTION_KD_0_TXT", txt_Kd_0)
-    result=result.replace("SPECIES_TXT", txt_species)
-    result=result.replace("TEMP_EXT", str(temperature_solution))
-    result=result.replace("TEMP", str(temperature))
-    result=result.replace("ADSORPTION_TXT", txt_adsorption)
-    result=result.replace("ADSORPTION_KD_TXT", txt_Kd)
-    result=result.replace("SPECIES_BND_TXT", txt_species_bnd)
-    open("chemical.inp","w").write(result)
 
-#def ecriture_chemical_equilibre_seawater():
-#    result=open("trame_chemical_atl_seawater.inp","r").read()
-#    open("chemical.inp","w").write(result)
+    with open("trame_chemical_reactive_transport.inp") as f:
+        result = f.read().replace("MINERALS_0_TXT", txt_minerals_0)
+    result = result.replace("MINERALS_TXT", txt_minerals)
+    result = result.replace("SPECIES_0_TXT", txt_species_0)
+    result = result.replace("ADSORPTION_KD_0_TXT", txt_Kd_0)
+    result = result.replace("SPECIES_TXT", txt_species)
+    result = result.replace("TEMP_EXT", str(temperature_solution))
+    result = result.replace("TEMP", str(temperature))
+    result = result.replace("ADSORPTION_TXT", txt_adsorption)
+    result = result.replace("ADSORPTION_KD_TXT", txt_Kd)
+    result = result.replace("SPECIES_BND_TXT", txt_species_bnd)
+    with open("chemical.inp", "w") as f:
+        f.write(result)
 
 def ecriture_chemical_equilibre_boundary_solution(database,species,temperature):
-    result=open("trame_chemical_bnd_solution.inp").read()
-    #Declaration of ionic species
+    with open("trame_chemical_bnd_solution.inp") as f:
+        result = f.read()
     txt_species_0 = ''
-    #for elem in self.init_species.keys():
     minerals, list_ordonnee = conversion_database(database, {})
     for elem in species.keys():
-        # if elem.lower() in list_ordonnee:
-        #     txt_species_0 += "'" + elem + "'      0\n"
         txt_species_0 += "'" + elem + "'      0\n"
     txt_species_0 += "'*'"
     txt_species = ''
     for elem in species.keys():
         if elem.upper() == 'H+':
-        #if elem.upper() == 'OH-':
             txt_species += "'" + elem + "'    3    "+str(species[elem])+"    "+str(species[elem])+"  '*'   0.0 \n"
         else:
             if species[elem] == 0:
@@ -429,14 +337,15 @@ def ecriture_chemical_equilibre_boundary_solution(database,species,temperature):
     result=result.replace("SPECIES_0_TXT", txt_species_0)
     result=result.replace("SPECIES_TXT", txt_species)
     result=result.replace("TEMP", str(temperature))
-    open("chemical.inp","w").write(result)
+    with open("chemical.inp", "w") as f:
+        f.write(result)
 
-def recup_txt_species(nb_lines = 13):
+def recup_txt_species():
     '''read chdump -> retrieve ionic species (guess and ctotal)'''
-    txt_species=open("chdump.out").readlines()
+    with open("chdump.out") as f:
+        txt_species = f.readlines()
     nb_lines = 0
     while '# component  flag    guess' not in txt_species[-nb_lines-1]:
-           # component  flag    guess
         nb_lines += 1
     txt_species = txt_species[-nb_lines:][-nb_lines:-1]
     species = {}
@@ -451,13 +360,13 @@ def recup_txt_species(nb_lines = 13):
         else:
             tmp_elem_ctotal = float(elem_list[4])
         species[elem_list[0][1:]] = {'guess':tmp_elem_guess,'ctotal':tmp_elem_ctotal}
-    #print(species)
-    return species#new_txt_species
+    return species
 
 def recup_minerals(exe_ini, minerals, database):
     '''read solid.out -> retrieve volume fractions of mineral species'''
     file = "solid.out"
-    result = open(file).readlines()[-1:]
+    with open(file) as f:
+        result = f.readlines()[-1:]
     list_val = result[0].split()
     header_out = post.recup_entete_solid(file, exe_ini)[0]
     i = 0
@@ -477,336 +386,226 @@ def recup_minerals(exe_ini, minerals, database):
     for elem in header_out:#mineral_database[database]['HYDROTALCITE']
         if elem.lower() in key_list_minerals or elem.upper() in minerals_tronques:# minerals:#mineral_database[database] 
             dico[elem] = float(list_val[i])/(1-porosity)
-        elif elem.upper() in minerals_tronques: #minerals_tronques:
+        elif elem.upper() in minerals_tronques:
             dico[minerals_tronques[elem.upper()]] = float(list_val[i])/(1-porosity)
-        # if elem == 'monosulfoal' or elem == 'monosulphat':
-        #     dico['Monosulfoaluminate'] = float(list_val[i])/(1-porosity)
-        # if elem == 'monocarboal' or elem == 'monocarbona':
-        #     dico['Monocarboaluminate'] = float(list_val[i])/(1-porosity)
-        # if elem == 'fe_ettringi':
-        #     dico['Fe_Ettringite'] = float(list_val[i])/(1-porosity)
-        # if elem == 'hydrotalcit':
-        #     dico['Hydrotalcite'] = float(list_val[i])/(1-porosity)
-        # if elem == 'fe(oh)3(am)':
-        #     dico['FE(OH)3'] = float(list_val[i])/(1-porosity)
-        # if elem.lower() in ['tob-i', 'c0.8sh']:
-        #     dico['TOBERMORITE'] = float(list_val[i])/(1-porosity)
-        # if elem.lower() in ['c1.6sh']:
-        #     dico['JENNITE'] = float(list_val[i])/(1-porosity)
-        # if elem.lower() == 'c3afs0.84h4':
-        #     dico['C3AFS0.84H4.32'] = float(list_val[i])/(1-porosity)
         i += 1
     return dico
 
-#def calcul_solution_interstitielle(minerals,species,database,temperature):
-#    ecriture_flow(temperature)
-#    ecriture_solute_equilibre(len(species),len(minerals),database)
-#    #ecriture_chemical_equilibre(minerals,species,temperature)
-#    ecriture_chemical_sol_inter(minerals,species,temperature)
-#    titi=t2data.t2data("flow.inp")
-#    if sys.platform == 'darwin':
-#        exe_ini = './treactv3omp_eos9_macosx_intel'
-#    else:
-#        exe_ini = 'tr3.0-omp_eos9_PC64.exe'
-#    titi.run(simulator=exe_ini)
-#    return recup_txt_species(), recup_minerals(exe_ini, minerals)
+# Kinetics parameters per canonical mineral key.
+# 'flag'         : 4th column in the header line (1 for C-S-H phases, 0 otherwise)
+# 'body'         : all lines after the header, including the closing "0.0   0.    000.00" line
+# 'surface_area' : initial reactive surface area (cm²/g) used in declare_minerals_init
+_MINERAL_KINETICS = {
+    'JENNITE': {
+        'flag': 1,
+        'body': (
+            "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0  \n"
+            "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '41e4',
+    },
+    'TOBERMORITE': {
+        'flag': 1,
+        'body': (
+            "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0  \n"
+            "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '41e4',
+    },
+    'MONOSULFOALUMINATE': {
+        'flag': 0,
+        'body': (
+            "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0\n"
+            "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0     1.e-6   0\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '5.7e4',
+    },
+    'MONOCARBOALUMINATE': {
+        'flag': 0,
+        'body': (
+            "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0\n"
+            "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0     1.e-6   0\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '5.7e4',
+    },
+    'ETTRINGITE': {
+        'flag': 0,
+        'body': (
+            "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
+            "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'HYDROTALCITE': {
+        'flag': 0,
+        'body': (
+            "               1.00e-9  0   1.0  1.0  0  0.0  0.0  0.0\n"
+            "               1.00e-9  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00            \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'PORTLANDITE': {
+        'flag': 0,
+        'body': (
+            "               2.24e-8  0   1.0  1.0  0  0.0  0.0  0.0\n"
+            "               2.24e-8  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '16.5e4',
+    },
+    'FRIEDEL_SALT': {
+        'flag': 0,
+        'body': (
+            "               6.76e-12  0   1.0  1.0  0.0  0.0  0.0  0.0    0.0   0\n"
+            "               6.76e-12  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '5.7e4',
+    },
+    'BRUCITE': {
+        'flag': 0,
+        'body': (
+            "              5.7544E-09    2   1.0  1.0  42.0  0.0  0.0  0.0    \n"
+            "                          1\n"
+            "                          1.86209E-05    59.0    1   'h+'   0.5  ! acid mechanism                      \n"
+            "              5.7544E-09    2   1.0  1.0  42.0  0.0  0.0  0.0         1.e-6   0    \n"
+            "                          1\n"
+            "                          1.86209E-05    59.0    1   'h+'   0.5  ! acid mechanism    \n"
+            "0.0   0.    000.00                              \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'CALCITE': {
+        'flag': 0,
+        'body': (
+            "              1.55e-6    2   1.0  1.0  23.5  0.0  0.0  0.0    \n"
+            "                          2\n"
+            "                          5e-1    14.4    1   'h+'   1  ! acid mechanism\n"
+            "                          3.31e-4 35.4    1   'h+'   1      ! base mechanism     \n"
+            "\n"
+            "              0.0    1   1.0  1.0  0.0  0.0  0.0  0.0  1.e-6   0        \n"
+            "                          1\n"
+            "                          1.55e-6  23.5    1    'mg+2'   -0.5      ! base mechanism     \n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'ARAGONITE': {  # Palandri and Kharaka, 2004
+        'flag': 0,
+        'body': (
+            "              4.5709e-10     2   1.0  1.0  23.5  0.0  0.0  0.0\n"
+            "                          1\n"
+            "                          4.1687e-7   14.4    1   'h+'   1.0  ! acid mechanism\n"
+            "              4.5709e-10     2   1.0  1.0  23.5  0.0  0.0  0.0  1.e-15   0    \n"
+            "                          1\n"
+            "                          4.1687e-7   14.4    1   'h+'   1.0  ! acid mechanism\n"
+            "0.0   0.    000.00    \n"
+        ),
+        'surface_area': '9.1e4',
+    },
+    'ANHYDRITE': {
+        'flag': 0,
+        'body': (
+            "               0.000645654  0   1.0  1.0  14.3  0.0  0.0  0.0\n"
+            "               0.000645654  0   1.0  1.0  14.3  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'C3AH6': {
+        'flag': 0,
+        'body': (
+            "               2.24e-10  0   1.0  1.0  0  0.0  0.0  0.0\n"
+            "               2.24e-10  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '16.5e4',
+    },
+    'GYPSUM': {
+        'flag': 0,
+        'body': (
+            "               0.00162181  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
+            "               0.00162181  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+    'KUZEL_SALT': {
+        'flag': 0,
+        'body': (
+            "               2.24e-08  0   1.0  1.0  0  0.0  0.0  0.0\n"
+            "               2.24e-08  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
+            "0.0   0.    000.00        \n"
+        ),
+        'surface_area': '16.5e4',
+    },
+    'CHRYSOTILE': {
+        'flag': 0,
+        'body': (
+            "              10e-12    2   1.0  1.0  73.5  0.0  0.0  0.0\n"
+            "                          2\n"
+            "                          0   73.5    1   'h+'   -0.230      ! acid mechanism         \n"
+            "                          2.63e-14   73.5    1   'h+'   -0.230      ! base mechanism           \n"
+            "              10e-12    2   1.0  1.0  73.5  0.0  0.0  0.0     1.e-6\n"
+            "                          0   73.5    1   'h+'   -0.230      ! acid mechanism     \n"
+            "                          2.63e-14   73.5    1   'h+'   -0.230      ! base mechanism     \n"
+            "0.0   0.    000.00                      \n"
+        ),
+        'surface_area': '9.8e4',
+    },
+}
 
-def declare_minerals(database,minerals,kinetics):
+def declare_minerals(database, minerals, kinetics):
     #Declaration of mineral species
-    list_minerals = [mineral_database[database][mineral].upper() for mineral in list_minerals_kinetics]
-    txt_minerals_0 = ''
-    txt_tmp = ''
-    for elem in minerals.keys():
-        if kinetics:
-            if elem.upper() in list_minerals:
-                if elem.upper() == mineral_database[database]['JENNITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['JENNITE']+"'                         1      3      1      0\n"
-                    txt_tmp += "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0  \n"
-                    txt_tmp += "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['TOBERMORITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['TOBERMORITE']+"'                         1      3      1      0\n"
-                    txt_tmp += "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0  \n"
-                    txt_tmp += "              2.75E-12    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'C2S':
-                    txt_tmp += "'C2S'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-6  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-6    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'C3A':
-                    txt_tmp += "'C3A'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-6  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-6    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'C3S':
-                    txt_tmp += "'C3S'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-6  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-6    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'C4AF':
-                    txt_tmp += "'C4AF'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-6  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-6    0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['MONOSULFOALUMINATE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['MONOSULFOALUMINATE']+"'                   1      3      0      0\n"
-                    txt_tmp += "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0     1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['MONOCARBOALUMINATE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['MONOCARBOALUMINATE']+"'                   1      3      0      0\n"
-                    txt_tmp += "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "              6.76E-12    0   1.0  1.0  0.0  0.0  0.0  0.0     1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['ETTRINGITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['ETTRINGITE']+"'                   1      3      0      0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['C3AS0.84H4.32'].upper():
-                    txt_tmp += "'"+mineral_database[database]['C3AS0.84H4.32']+"'                   1      3      0      0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['C3AFS0.84H4.32'].upper():
-                    txt_tmp += "'"+mineral_database[database]['C3AFS0.84H4.32']+"'                   1      3      0      0\n"
-                    txt_tmp += "               7.08E-14  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "               7.08E-14  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'C3FS1.34H3.32':
-                    txt_tmp += "'C3FS1.34H3.32'                   1      3      0      0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "               7.08E-13  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == 'DOLOMITE(ORDERED)':
-                    txt_tmp += "'Dolomite(ordered)'          1      3     0    0             \n"
-                    txt_tmp += "              2.95e-8     2   1.0  1.0  52.2  0.0  0.0  0.0\n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          6.46e-4   36.1    1   'h+'   0.5  ! acid mechanism\n"
-                    txt_tmp += "                          7.76e-6   34.8    1   'h+'   0.5     ! base mechanism     \n"
-                    txt_tmp += "\n"
-                    txt_tmp += "              9.5e-15     0   1.0  1.0  103.0  0.0  0.0  0.0  1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['ARAGONITE'].upper():#Palandri and Kharaka,2004
-                    txt_tmp += "'"+mineral_database[database]['ARAGONITE']+"'          1      3     0    0             \n"
-                    txt_tmp += "              4.5709e-10     2   1.0  1.0  23.5  0.0  0.0  0.0\n"
-                    txt_tmp += "                          1\n"
-                    txt_tmp += "                          4.1687e-7   14.4    1   'h+'   1.0  ! acid mechanism\n"
-                    txt_tmp += "              4.5709e-10     2   1.0  1.0  23.5  0.0  0.0  0.0  1.e-15   0    \n"
-                    txt_tmp += "                          1\n"
-                    txt_tmp += "                          4.1687e-7   14.4    1   'h+'   1.0  ! acid mechanism\n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['CALCITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['CALCITE']+"'          1      3     0    0             \n"
-                    txt_tmp += "              1.55e-6    2   1.0  1.0  23.5  0.0  0.0  0.0    \n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          5e-1    14.4    1   'h+'   1  ! acid mechanism\n"
-                    txt_tmp += "                          3.31e-4 35.4    1   'h+'   1      ! base mechanism     \n"
-                    txt_tmp += "\n"
-                    # txt_tmp += "              1.8e-7    2   2.0  0.5  66.0  0.0  0.0  0.0  1.e-6   0    \n"
-                    # txt_tmp += "                          1\n"
-                    # txt_tmp += "                          1.9e-3  67.0    1   'CO3-2'   1.6      ! base mechanism \n\n"
-                    txt_tmp += "              0.0    1   1.0  1.0  0.0  0.0  0.0  0.0  1.e-6   0        \n"
-                    txt_tmp += "                          1\n"
-                    txt_tmp += "                          1.55e-6  23.5    1    'mg+2'   -0.5      ! base mechanism     \n"
-                    txt_tmp += "0.0   0.    000.00    \n"
-                if elem.upper() == mineral_database[database]['CHRYSOTILE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['CHRYSOTILE']+"'                    1      3      0      0\n"
-                    txt_tmp += "              10e-12    2   1.0  1.0  73.5  0.0  0.0  0.0\n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          0   73.5    1   'h+'   -0.230      ! acid mechanism         \n"
-                    txt_tmp += "                          2.63e-14   73.5    1   'h+'   -0.230      ! base mechanism           \n"                
-                    txt_tmp += "              10e-12    2   1.0  1.0  73.5  0.0  0.0  0.0     1.e-6\n"
-                    txt_tmp += "                          0   73.5    1   'h+'   -0.230      ! acid mechanism     \n"
-                    txt_tmp += "                          2.63e-14   73.5    1   'h+'   -0.230      ! base mechanism     \n"
-                    txt_tmp += "0.0   0.    000.00                      \n"
-                if elem.upper() == mineral_database[database]['HYDROTALCITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['HYDROTALCITE']+"'                  1      3      0      0\n"#1      3      0      0\n"
-                    txt_tmp += "               1.00e-9  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               1.00e-9  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00            \n"
-                if elem.upper() == 'THAUMASITE':
-                    txt_tmp += "'Thaumasite'                  1      3      0      0\n"#1      3      0      0\n"
-                    txt_tmp += "               1.00e-13  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               1.00e-13  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00            \n"
-                if elem.upper() == mineral_database[database]['GIBBSITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['GIBBSITE']+"'                    1      3      0      0\n"
-                    txt_tmp += "              3.16e-12    2   1.0  1.0  61.2  0.0  0.0  0.0\n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          2.24e-8   47.5    1   'h+'   0.992  ! acid mechanism\n"
-                    txt_tmp += "                          2.24e-17   80.1    1   'h+'   -0.784      ! base mechanism                 \n\n"          
-                    txt_tmp += "              3.16e-12    2   1.0  1.0  61.2  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          2.24e-8   47.5    1   'h+'   0.992  ! acid mechanism\n"
-                    txt_tmp += "                          2.24e-17   80.1    1   'h+'   -0.784      ! base mechanism     \n"
-                    txt_tmp += "0.0   0.    000.00                      \n"
-                if elem.upper() == mineral_database[database]['ANHYDRITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['ANHYDRITE']+"'                    1      3      0      0\n"
-                    txt_tmp += "               0.000645654  0   1.0  1.0  14.3  0.0  0.0  0.0\n"
-                    txt_tmp += "               0.000645654  0   1.0  1.0  14.3  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00        \n"
-                if elem.upper() == mineral_database[database]['GYPSUM'].upper():
-                    txt_tmp += "'"+mineral_database[database]['GYPSUM']+"'                    1      3      0      0\n"
-                    txt_tmp += "               0.00162181  0   1.0  1.0  0.0  0.0  0.0  0.0\n"
-                    txt_tmp += "               0.00162181  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00        \n"
-                if elem.upper() == 'MAGNESITE':
-                    txt_tmp += "'Magnesite'              1      3     0    0             \n"
-                    txt_tmp += "              4.57088E-10    2   1.0  1.0  23.5  0.0  0.0  0.0    \n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          4.16869E-07    14.4    1   'h+'   1  ! acid mechanism\n"
-                    txt_tmp += "                          6.0256E-06     62.8    1   'co3-2'   1      ! base mechanism           \n\n"                
-                    txt_tmp += "              4.57088E-10    2   1.0  1.0  23.5  0.0  0.0  0.0     1.e-6   0    \n"
-                    txt_tmp += "                          2\n"
-                    txt_tmp += "                          4.16869E-07    14.4    1   'h+'   1  ! acid mechanism\n"
-                    txt_tmp += "                          6.0256E-06     62.8    1   'co3-2'   1      ! base mechanism         \n"
-                    txt_tmp += "0.0   0.    000.00                              \n"
-                if elem.upper() == mineral_database[database]['BRUCITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['BRUCITE']+"'                1      3     0    0             \n"
-                    txt_tmp += "              5.7544E-09    2   1.0  1.0  42.0  0.0  0.0  0.0    \n"
-                    txt_tmp += "                          1\n"
-                    txt_tmp += "                          1.86209E-05    59.0    1   'h+'   0.5  ! acid mechanism                      \n"
-                    txt_tmp += "              5.7544E-09    2   1.0  1.0  42.0  0.0  0.0  0.0         1.e-6   0    \n"
-                    txt_tmp += "                          1\n"
-                    txt_tmp += "                          1.86209E-05    59.0    1   'h+'   0.5  ! acid mechanism    \n"
-                    txt_tmp += "0.0   0.    000.00                              \n"
-                if elem.upper() == mineral_database[database]['C3AH6'].upper():
-                    txt_tmp += "'"+mineral_database[database]['C3AH6']+"'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-10  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-10  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00        \n"
-                if elem.upper() == mineral_database[database]['PORTLANDITE'].upper():
-                    txt_tmp += "'"+mineral_database[database]['PORTLANDITE']+"'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-8  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-8  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00        \n"
-                if elem.upper() == mineral_database[database]['KUZEL_SALT'].upper():
-                    txt_tmp += "'"+mineral_database[database]['KUZEL_SALT']+"'                    1      3      0      0\n"
-                    txt_tmp += "               2.24e-08  0   1.0  1.0  0  0.0  0.0  0.0\n"
-                    txt_tmp += "               2.24e-08  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    txt_tmp += "0.0   0.    000.00        \n"
-                if elem.upper() == mineral_database[database]['FRIEDEL_SALT'].upper():
-                    txt_tmp += "'"+mineral_database[database]['FRIEDEL_SALT']+"'                    1      3      0      0\n"
-                    txt_tmp += "               6.76e-12  0   1.0  1.0  0.0  0.0  0.0  0.0    0.0   0\n"
-                    txt_tmp += "               6.76e-12  0   1.0  1.0  0.0  0.0  0.0  0.0    1.e-6   0\n"
-                    #txt_tmp += "0.0   0.    000.00        \n"
-                    txt_tmp += "0.0   0.    000.00        \n"
+    db_to_canonical = {mineral_database[database][k].upper(): k for k in mineral_database[database]}
+    kinetics_names = {mineral_database[database][k].upper() for k in list_minerals_kinetics
+                      if k in mineral_database[database]}
+    txt_equilibrium = ''
+    txt_kinetic = ''
+    for elem in minerals:
+        if kinetics and elem.upper() in kinetics_names:
+            canonical = db_to_canonical.get(elem.upper())
+            params = _MINERAL_KINETICS.get(canonical) if canonical else None
+            if params:
+                txt_kinetic += f"'{elem}'    1      3      {params['flag']}      0\n"
+                txt_kinetic += params['body']
             else:
-                txt_minerals_0 += "'" + elem + "'           0      0      0      0\n"
-                txt_minerals_0 += "0.0 0.0 0.0\n"
+                txt_equilibrium += f"'{elem}'           0      0      0      0\n"
+                txt_equilibrium += "0.0 0.0 0.0\n"
         else:
-            txt_minerals_0 += "'" + elem + "'           0      0      0      0\n"
-            txt_minerals_0 += "0.0 0.0 0.0\n"
-    txt_minerals_0 += txt_tmp
-    txt_minerals_0 += "'*'"
-    return txt_minerals_0
+            txt_equilibrium += f"'{elem}'           0      0      0      0\n"
+            txt_equilibrium += "0.0 0.0 0.0\n"
+    return txt_equilibrium + txt_kinetic + "'*'"
 
-def declare_minerals_init(database,minerals,kinetics):
-    list_minerals = [mineral_database[database][mineral].upper() for mineral in list_minerals_kinetics]
-    txt_minerals = ''
-    for elem in minerals.keys():
-        if kinetics:
-            if elem.upper() in list_minerals:
-                if elem.upper() == mineral_database[database]['JENNITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['JENNITE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                41e4     0  \n"
-                if elem.upper() == mineral_database[database]['TOBERMORITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['TOBERMORITE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                41e4     0  \n"
-                if elem.upper() == 'C2S':
-                    txt_minerals += "'C2S'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                9.8e4     0  \n"
-                if elem.upper() == 'C3A':
-                    txt_minerals += "'C3A'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                9.8e4     0  \n"
-                if elem.upper() == 'C3S':
-                    txt_minerals += "'C3S'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                9.8e4     0  \n"
-                if elem.upper() == 'C4AF':
-                    txt_minerals += "'C4AF'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "              0.0e0                                9.8e4     0  \n"
-        #                         if elem.upper() == 'MONOCARBOALUMINATE':
-        #                             txt_minerals += "'Monocarboaluminate'     " + str(minerals[elem]) + "    1\n"
-        #                             txt_minerals += "0.0e0                                9.8e4   0\n"
-                if elem.upper() == mineral_database[database]['DOLOMITE(ORDERED)'].upper():
-                    txt_minerals += "'"+mineral_database[database]['DOLOMITE(ORDERED)']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['CALCITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['CALCITE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['ARAGONITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['ARAGONITE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.1e4     0\n"
-                if elem.upper() == mineral_database[database]['ETTRINGITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['ETTRINGITE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['C3AS0.84H4.32'].upper():
-                    txt_minerals += "'"+mineral_database[database]['C3AS0.84H4.32']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['C3AFS0.84H4.32'].upper():
-                    txt_minerals += "'"+mineral_database[database]['C3AFS0.84H4.32']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['C3FS1.34H3.32'].upper():
-                    txt_minerals += "'"+mineral_database[database]['C3FS1.34H3.32']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['MONOSULFOALUMINATE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['MONOSULFOALUMINATE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                5.7e4     0 \n"
-                if elem.upper() == mineral_database[database]['MONOCARBOALUMINATE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['MONOCARBOALUMINATE']+"'     " + str(minerals[elem]) + "    1\n"
-                    txt_minerals += "0.0e0                                5.7e4     0 \n"
-                if elem.upper() == mineral_database[database]['HYDROTALCITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['HYDROTALCITE']+"'      " + str(minerals[elem]) + "   1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['THAUMASITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['THAUMASITE']+"'      " + str(minerals[elem]) + "   1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['ANHYDRITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['ANHYDRITE']+"'            " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['GYPSUM'].upper():
-                    txt_minerals += "'"+mineral_database[database]['GYPSUM']+"'           " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['MAGNESITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['MAGNESITE']+"'            " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['BRUCITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['BRUCITE']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['C3AH6'].upper():
-                    txt_minerals += "'"+mineral_database[database]['C3AH6']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                16.5e4     0\n"
-                if elem.upper() == mineral_database[database]['GIBBSITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['GIBBSITE']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
-                if elem.upper() == mineral_database[database]['PORTLANDITE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['PORTLANDITE']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                16.5e4     0\n"
-                if elem.upper() == mineral_database[database]['KUZEL_SALT'].upper():
-                    txt_minerals += "'"+mineral_database[database]['KUZEL_SALT']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                16.5e4     0\n"
-                if elem.upper() == mineral_database[database]['FRIEDEL_SALT'].upper():
-                    txt_minerals += "'"+mineral_database[database]['FRIEDEL_SALT']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                5.7e4     0\n"
-                if elem.upper() == mineral_database[database]['CHRYSOTILE'].upper():
-                    txt_minerals += "'"+mineral_database[database]['CHRYSOTILE']+"'              " + str(minerals[elem]) + "       1\n"
-                    txt_minerals += "0.0e0                                9.8e4     0\n"
+def declare_minerals_init(database, minerals, kinetics):
+    db_to_canonical = {mineral_database[database][k].upper(): k for k in mineral_database[database]}
+    kinetics_names = {mineral_database[database][k].upper() for k in list_minerals_kinetics
+                      if k in mineral_database[database]}
+    txt = ''
+    for elem, vol_frac in minerals.items():
+        if kinetics and elem.upper() in kinetics_names:
+            canonical = db_to_canonical.get(elem.upper())
+            params = _MINERAL_KINETICS.get(canonical) if canonical else None
+            if params:
+                txt += f"'{elem}'     {vol_frac}    1\n"
+                txt += f"              0.0e0                                {params['surface_area']}     0\n"
             else:
-                txt_minerals += "'" + elem + "'    " + str(minerals[elem]) + "    0.\n"
+                txt += f"'{elem}'    {vol_frac}    0.\n"
         else:
-            txt_minerals += "'" + elem + "'    " + str(minerals[elem]) + "    0.\n"
-#         else:
-#             txt_minerals += "'" + elem + "'    " + str(minerals[elem]) + "    0.\n"
-    txt_minerals += "'*'                0.0      0 \n"
-    return txt_minerals
+            txt += f"'{elem}'    {vol_frac}    0.\n"
+    txt += "'*'                0.0      0 \n"
+    return txt
 
 def calcul_equilibre_bnd_solution(boundary_solution,porosity,database):
     os.chdir('Boundary')
     ecriture_flow(boundary_solution['temperature'],porosity)
     ecriture_solute(len(boundary_solution['composition']),0,database,'boundary')
-    #ecriture_chemical_equilibre_seawater()
     ecriture_chemical_equilibre_boundary_solution(database,boundary_solution['composition'],boundary_solution['temperature'])
     titi=t2data.t2data("flow.inp")
     if sys.platform == 'darwin':
@@ -815,14 +614,13 @@ def calcul_equilibre_bnd_solution(boundary_solution,porosity,database):
         exe_ini = 'tr3.0-omp_eos9_PC64.exe'
     titi.run(simulator=exe_ini)
     shutil.copy2("plot.dat","eq_init.dat")
-    species = recup_txt_species(nb_lines = len(boundary_solution['composition'])+1)
+    species = recup_txt_species()
     os.chdir('..')
     eq_bnd_solution = {'temperature':boundary_solution['temperature'],'composition':species}
     return eq_bnd_solution
 
 def calcul_equilibre_mineraux(material,database,complexation,kinetics,update_porosity):
     os.chdir('Material_equilibrium')
-    #dict_minerals_database = lecture_database(database)
     ecriture_flow(material.temperature,material.porosite)#mesures_expe['P_eau'])
     ecriture_solute(len(material.species),len(material.minerals),database,'eq_materiau',complexation,update_porosity)
     ecriture_chemical_equilibre(database,material.minerals,material.species,material.temperature,
@@ -839,7 +637,6 @@ def calcul_equilibre_mineraux(material,database,complexation,kinetics,update_por
     return species, minerals
 
 def calcul_transport_reactif(material,bnd_solution,database,complexation,kinetics,update_porosity,exe):
-    #ecriture_flow(material.temperature,material.mesures_expe['P_eau'])
     list_minerals_TR = [x for x in list_minerals if x not in set(material.minerals)]
     for elem in list_minerals_TR:
         material.minerals[elem] = 0.0
@@ -847,10 +644,6 @@ def calcul_transport_reactif(material,bnd_solution,database,complexation,kinetic
                     D_eff=material.D_eff, porosite=material.porosite)
     ecriture_chemical_transport_reactif(database,material,bnd_solution,complexation,kinetics)
     titi=t2data.t2data("flow.inp")
-#     if sys.platform == 'darwin':
-#         exe_ini = './treactv3omp_eos9_macosx_intel'
-#     else:
-#         exe_ini = 'tr3.0-omp_eos9_PC64.exe'
     titi.run(simulator=exe)
     return recup_txt_species(), recup_minerals(exe, material.minerals, database)
 
