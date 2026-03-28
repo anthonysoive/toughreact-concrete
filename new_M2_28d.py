@@ -1,53 +1,53 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Simulation de propagation d'eau de mer dans le béton M70-30FA
-sous conditions de marnage.
+Simulation of seawater propagation in M70-30FA concrete
+under tidal exposure conditions.
 """
 
 from toughreact_concrete.model.simulation import run_simulation
 
-# ── Unités ───────────────────────────────────────────────────────────────────
-heure = 3600.
-jour  = 24. * heure
+# ── Time units ────────────────────────────────────────────────────────────────
+hour = 3600.
+day  = 24. * hour
 
-# ── Paramètres ───────────────────────────────────────────────────────────────
+# ── Parameters ────────────────────────────────────────────────────────────────
 run_simulation(
-    # Base de données thermodynamique
+    # Thermodynamic database
     database            = "Thermoddem_2023.txt",
     eos                 = 'eos9',
     pitzer              = False,
 
-    # Géométrie
-    ep_struct           = 0.01,     # épaisseur de la structure (m)
-    hauteur             = 1.0,      # hauteur (m)
-    n_elements          = 200,      # nombre d'éléments selon X
-    raison_suite        = 0.999,    # raison de la suite géométrique
+    # Geometry
+    ep_struct           = 0.01,     # structural thickness (m)
+    hauteur             = 1.0,      # height (m)
+    n_elements          = 200,      # number of elements along X
+    raison_suite        = 0.999,    # geometric-progression ratio
 
-    # Matériau
+    # Material
     nom_beton           = 'M70-30FA',
-    temps_cure          = 10000.,   # temps de cure (h) — hydratation complète
-    porosite            = 0.22,     # porosité mesurée (-)
-    D_eff               = 0.25e-12, # coefficient de diffusion effectif (m²/s)
+    temps_cure          = 10000.,   # curing time (h) — full hydration
+    porosite            = 0.22,     # measured porosity (-)
+    D_eff               = 0.25e-12, # effective diffusion coefficient (m²/s)
 
-    # Conditions environnementales
-    temperature_eau     = 20.0,     # température de l'eau (°C)
-    humidite_relative_ext = 70,     # humidité relative extérieure (%)
-    temperature_ext     = 14,       # température atmosphérique (°C)
-    P_atm               = 1.013e5,  # pression atmosphérique (Pa)
-    Pp_co2              = 0.0,      # pression partielle CO₂ (Pa)
+    # Environmental conditions
+    temperature_eau     = 20.0,     # water temperature (°C)
+    humidite_relative_ext = 70,     # external relative humidity (%)
+    temperature_ext     = 14,       # external atmospheric temperature (°C)
+    P_atm               = 1.013e5,  # atmospheric pressure (Pa)
+    Pp_co2              = 0.0,      # CO2 partial pressure (Pa)
 
-    # Géométrie d'exposition
-    boundary_side       = 'right',  # face exposée : 'left' ou 'right'
-    ep_couche_limite    = 2e-5,     # épaisseur de la couche limite (m)
+    # Exposure geometry
+    boundary_side       = 'right',  # exposed face: 'left' or 'right'
+    ep_couche_limite    = 2e-5,     # boundary-layer element thickness (m)
 
-    # Durée de simulation
-    temps_exposure      = 1 * heure,
-    time_output         = [1 * heure],
+    # Simulation duration
+    temps_exposure      = 1 * hour,
+    time_output         = [1 * hour],
 
-    # Options solveur
+    # Solver options
     kinetics            = True,
     update_porosity     = False,
     complexation        = True,
-    dt_max              = 600.,     # pas de temps maximum (s)
+    dt_max              = 600.,     # maximum time step (s)
 )

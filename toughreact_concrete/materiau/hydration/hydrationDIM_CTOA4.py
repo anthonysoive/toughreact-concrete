@@ -77,7 +77,7 @@ CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    2.03,-3283,297)
 #CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    2.0,-3283,297)
 #CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    1.9,-3283,297)
 CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    2.1,-3283,297)
-#en accord avec le modèle de Browers
+#in agreement with the Brouwers model
 CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    2.08,-3283,297)
 #CSH=molecule("CSH",                 {C:1.7,S:1,H:4},    1.99,-3283,297) #pichler 2007
 #le CSH pouzzolanique de Bentz1998
@@ -192,7 +192,7 @@ class Reaction:
         for molec in self.eq:
             if dalphaeffect*N0*self.eq[molec]/self.eq[self.anhyd]>compo[molec] and N0>0 : #and molec !='H'
                 dalphaeffect=compo[molec]*self.eq[self.anhyd]/self.eq[molec]/N0
-            if dalphaeffect<0 : #permet de traiter les quantités de réactif négative. Ex: l'eau des CSH en dessous de 80%RH
+            if dalphaeffect<0 : #handles negative reactant quantities. Ex: water in C-S-H below 80% RH
                 return 0
         #on execute la reaction
         for molec in self.eq:
@@ -326,7 +326,7 @@ class Binder:
         N0["CSbH1s2"]=0
         N0["CSb"]=0
     
-        #l'hydratation de l'hemidrate entraine un petit retrait, dans le retrait le chatelier. On remet à jour les quantités pour avoir un volume de 1cm3
+        #the hydration of hemihydrate causes a small shrinkage, within the Le Chatelier shrinkage. Quantities are updated to have a volume of 1cm3
         vol=0
         for espece in N0:
             vol+=N0[espece]*v[espece]
@@ -555,7 +555,7 @@ def Waller(anhyd,alpha,timeeqprev,timeeq):
     
     tau={'SS':80.*400./385.,'A':80.*400./385.,'C3A':24./24.}   
     n={'SS':0.7,'A':0.7,'C3A':1.} 
-    # d'après Waller 1999
+    # according to Waller 1999
     if alpha >= 1: 
         return 0
     if alpha>0.00001:
@@ -708,19 +708,19 @@ def cookPoro2diam(phi,phimax):
             diammin=diamtest
         #print diammin, diammax, porotest,phi, phimax
     
-    #si diamètre inférieur à 2nm, retour 2nm
+    #if diameter is less than 2nm, return 2nm
     if diammin<2e-9:
         return 2e-9
     return diammin
 
-def pvsat(T): #T en celcius, pvsat en Pa
+def pvsat(T): #T in Celsius, pvsat in Pa
     # Arden Buck equation
     return 1000.*0.61121*np.exp((18.678-T/234.5)*T/(257.14+T))
     
-def dpvsat_dT(T): #T en celcius, la dérivée de pvsat en Pa/K
+def dpvsat_dT(T): #T in Celsius, the derivative of pvsat in Pa/K
     return ((-1./234.5)*T/(257.14+T)+(18.678-T/234.5)/(257.14+T)-(18.678-T/234.5)*T/np.square(257.14+T))*pvsat(T)
     
-def dgamma_dT(T=25.): #T en celcius, retour en mN/m/K
+def dgamma_dT(T=25.): #T in Celsius, return value in mN/m/K
     return 235.8*(1.256*np.power(1-(T+273)/647.096,0.256)*(-1/647.096))*(1-0.625*(1-(T+273)/647.096))+235.8*np.power(1-(T+273)/647.096,1.256)*(0.625/647.096)
 
 def gamma(T=25.):
@@ -762,13 +762,13 @@ class Hydrationmodel:
         self.binder=binder
         self.wsc=wsc
         
-        self.massc=0.5  #masse de ciment, Kg
+        self.massc=0.5  #mass of cement, kg
   
-        self.aggregate={}   #liste d'aggregat [densite-masse-cp]
-        self.air_content=0 #la fraction volumique d'air (occlus+ entrainé), teneur en air
+        self.aggregate={}   #list of aggregates [density-mass-cp]
+        self.air_content=0 #the volumetric air fraction (entrapped + entrained), air content
         
         self.calo=Calorimeter()
-        self.dessicator=Dessicator() #dessicateur par defaut en endogène
+        self.dessicator=Dessicator() #desiccator defaulting to endogenous (sealed) conditions
         
         self.masshumic=0.  #mass of humic acid in kg.
         self.saturated=0
@@ -783,13 +783,13 @@ class Hydrationmodel:
         filler=self.binder.filler*self.massc
         #ajout du filler dans la liste
         self.addaggregate("filler",filler,2.716,0.84) #//filler calcaire
-        #le filler est retiré de la masse de pâte de ciment, il devient de l'aggregat
+        #the filler is removed from the cement paste mass and becomes an aggregate
         masscprev=self.massc
         self.massc-=filler
-        #le rapport wsc doit être corrigé des fillers.
+        #the wsc ratio must be corrected for the fillers.
         self.wsc=self.wsc*(self.massc+filler)/self.massc
         
-        #la surface de réaction doit être conservée et affectée au ciment...
+        #the reaction surface area must be preserved and assigned to the cement...
         
 
         #ainsi que la composition massique
@@ -848,28 +848,28 @@ class Hydrationmodel:
         :type humic_orga: float
         
         '''
-        #la partie organique va compter comme un aggregat très mou.
+        #the organic fraction will be treated as a very soft aggregate.
         mass_orga=mass*w_orga/100.
         mass_sedim=mass-mass_orga
         
         weightfraction_sediment=(mass-mass_orga)/(mass-mass_orga+self.massc)
         
-        #on définit un nouveau liant, en considérant que l'argile activée est assimilée à de la silice.
+        #a new binder is defined, treating activated clay as equivalent to silica.
         newbinder=Binder()
         newbinder.addbinderBogue(100.*(1.-weightfraction_sediment), {i:100.*self.binder.weightfraction[i] for i in self.binder.weightfraction}, self.binder.blaine)
         if(w_orga<100.):
             newbinder.addbinderBogue(100.*(weightfraction_sediment),{'SS':100*w_clay/(100.-w_orga)*active_clay},blaine_clay)
         
         
-        #on change le liant
+        #update the binder
         self.binder=newbinder
         self.massc=self.massc+mass_sedim
         
         
-        #cette matiere organique devient un aggregat aux propriétés particulières (proche de l'eau)
+        #this organic matter becomes an aggregate with special properties (close to water)
         self.addaggregate("organic_matter",mass_orga,1.1,4.185,modulus=0.0132,poisson=0.499)
         
-        #cette quantité de matière organique va jouer sur la cinétique d'hydratation
+        #this amount of organic matter will affect the hydration kinetics
         self.masshumic=mass_orga*humic_orga*0.01
         
         
@@ -927,7 +927,7 @@ class Hydrationmodel:
         return rhocc
     
     def getrhoact(self,state):
-        # à partir de la composition, la densité de la pâte de ciment
+        # from the composition, compute the density of the cement paste
         mass=0.
         volume=1.  #cm3
         for i in state['compo'].keys():
@@ -969,8 +969,8 @@ class Hydrationmodel:
         # Baert, 5th international Essen workshop
         #state['timeeqSS']=stateprev['timeeqSS']+exp(-46400./8.31*(1./(stateprev['temperature']+273.)-1./293.))*(state['time']-stateprev['time'])
 
-        #taux d'avancement hors temperature, calcule sur la base des temps equivalents :
-        # Cinetique d'après le modèle de Parrot et Killoh
+        #degree of reaction excluding temperature effect, computed on the basis of equivalent times:
+        # Kinetics according to the Parrot and Killoh model
 
         dalphaC3S=ParrotKilloh('C3S', stateprev['alphaC3S'], stateprev['timeeqC3S'], state['timeeqC3S'])    
         dalphaC2S=ParrotKilloh('C2S', stateprev['alphaC2S'], stateprev['timeeqC2S'], state['timeeqC2S'])
@@ -986,7 +986,7 @@ class Hydrationmodel:
         
         #influence de la finesse Blaine
         Hl=self.binder.blaine/385.0
-        # d'après le modèle de F Lin
+        # according to the F. Lin model
         dalphaC3S=dalphaC3S*Hl
         dalphaC2S=dalphaC2S*Hl
         dalphaC3A=dalphaC3A*Hl
@@ -995,7 +995,7 @@ class Hydrationmodel:
         dalphaA=dalphaA*Hl
         
         
-        #influence humidité relative
+        #relative humidity influence
         fracls,vpate=self.fraclargescale()
         #le dessicateur nous retourne un rh cible
         rhtarget=self.dessicator.getrh(stateprev['time'])
@@ -1003,11 +1003,11 @@ class Hydrationmodel:
             rhtarget=0.99
         rH=100.   
         
-        #condition endogène : l'évolution du RH est dictée par l'eau disponible.
-        # Vp : volume d'eau capillaire+espace en air
-        # Vfree : volume d'eau capilaire
+        #endogenous condition: the evolution of RH is governed by the available water.
+        # Vp : volume of capillary water + air space
+        # Vfree : volume of capillary water
         
-        # l'eau capillaire à partir de d=2.6nm, à plus que 40% RH au premier séchage. QENS : H=2.65 rho=2.31 molar mass 203, molar vol 88
+        # capillary water from d=2.6nm, above 40% RH at first drying. QENS: H=2.65 rho=2.31 molar mass 203, molar vol 88
         Vp=1.
         Vp-=stateprev['compo']['C3S']*v['C3S']+stateprev['compo']['C2S']*v['C2S']+stateprev['compo']['C3A']*v['C3A']+stateprev['compo']['C4AF']*v['C4AF']
         Vp-=stateprev['compo']['SS']*v['SS']+stateprev['compo']['A']*v['A']+stateprev['compo']['CCb']*v['CCb']
@@ -1019,7 +1019,7 @@ class Hydrationmodel:
         Vp-=stateprev['compo']['C3AH6']*v['C3AH6']
         Vp-=stateprev['compo']['FH3']*v['FH3']
         
-        # l'eau capillaire à partir de d=2.6nm, à plus que 40% RH au premier séchage. QENS : H=2.65 rho=2.31 molar mass 203, molar vol 88
+        # capillary water from d=2.6nm, above 40% RH at first drying. QENS: H=2.65 rho=2.31 molar mass 203, molar vol 88
         Vp-=stateprev['compo']['CSH']*89.+stateprev['compo']['CSHp']*79.5
         Vfree=(stateprev['compo']['H']+stateprev['compo']['CSH']*(4.-2.7)+stateprev['compo']['CSHp']*(3.9-2.7))*v['H']
         
@@ -1030,7 +1030,7 @@ class Hydrationmodel:
         #Vp=(stateprev['phi_cap']+stateprev['compo']['CSH']*v['H']*(4-2.65)+stateprev['compo']['CSHp']*v['H']*(3.9-2.65))*fracls['paste']/(fracls['paste']+fracls['filler'])
         #Vfree=(stateprev['compo']['H']*v['H']+stateprev['compo']['CSH']*v['H']*(4-2.65)+stateprev['compo']['CSHp']*v['H']*(3.9-2.65))*fracls['paste']/(fracls['paste']+fracls['filler'])
         
-        #calcul du diamètre du dernier pore plein:
+        #calculation of the diameter of the last filled pore:
         if Vfree>Vp:
             "oups.... Vfree>Vp..."
             Vfree=Vp
@@ -1050,21 +1050,21 @@ class Hydrationmodel:
             self.dessicator.rhtcure=rH
             
         if rhtarget>0:
-            #condition d'échange : l'evolution de RH est fixée par les echanges.
+            #exchange condition: the evolution of RH is fixed by mass exchanges.
             #rH=rhtarget
             effectivediam=2.*waterRadius(rhtarget,stateprev['temperature'])
             #effectivediam=-0.6237/(lnRH*(stateprev['temperature']+273.))
             #print "effectivediam", effectivediam
             
-            # porosité pleine d'eau liée au diamètre du plus gros pore plein:
+            # water-filled porosity associated with the diameter of the largest filled pore:
             vcap=cookDiam2poro(effectivediam, 100*Vp)
             if vcap<0:
                 vcap=0
-            #cette eau correspond à l'eau dont on doit tenir compte. On doit soustraire l'eau pour retrouver la stochiometrie de 4
+            #this water corresponds to the water that must be accounted for. The gel water must be subtracted to recover a stoichiometry of 4
             vcap=vcap-stateprev['compo']['CSH']*v['H']*(4-2.7)-stateprev['compo']['CSHp']*v['H']*(3.9-2.7)
             waterend=(vcap)*(fracls['paste']+fracls['filler'])/fracls['paste']/v['H']
 
-            if (self.dessicator.rhext<rH and rhtarget<rH) or (self.dessicator.rhext>rH):   #on autorise la réhumidification
+            if (self.dessicator.rhext<rH and rhtarget<rH) or (self.dessicator.rhext>rH):   #re-wetting is allowed
                 rH=rhtarget
                 state['cap_pressure']=capillarypressure(effectivediam*0.5,stateprev['temperature']) #capillary pressure en MPa
                 stateprev['compo']['H']=waterend
@@ -1095,7 +1095,7 @@ class Hydrationmodel:
             #stateprev['compo']['H']+=-3.*stateprev['eps_ch']/v['H']
             
             #state
-        #influence du rapport w/c, d'après Bentz 2006
+        #influence of the w/c ratio, according to Bentz 2006
         #tot=0
         #for x in stateprev['compo']:
         #    tot+=stateprev['compo'][x]*v[x]
@@ -1112,7 +1112,7 @@ class Hydrationmodel:
         dalphaA=dalphaA*Hl
         
         
-        #influence de la matière organique, en particulier, de l'acide humique
+        #influence of organic matter, in particular humic acid
         Hl=1-self.masshumic/(0.03*self.massc)
         if Hl<0.:
             Hl=0.
@@ -1138,7 +1138,7 @@ class Hydrationmodel:
         if(stateprev['alphaA']+dalphaA>1):
             dalphaA=1-stateprev['alphaA']
         
-        #reactions, par ordre de priorité
+        #reactions, in priority order
         N0=self.initial_content()
         dalphaR={}
         compo=stateprev['compo'].copy()
@@ -1150,7 +1150,7 @@ class Hydrationmodel:
         # gypse to ettringite
         dalphaR['RaC3A']=d_reac['RaC3A'].react(dalphaC3A,compo,N0['C3A'])
         
-        #d'après Lothenbach2008
+        #according to Lothenbach 2008
         dalphaR['RdC3A']=0
         if stateprev['temperature']<48:
             #C3A to monocarboaluminate
@@ -1162,7 +1162,7 @@ class Hydrationmodel:
         
         #C4AF
         
-        #D'après Brouwers, Dilnesa, Lothenbach 2014, C4AF réagit avec le C2S et le C3S pour formet des hydrogarnets
+        #According to Brouwers, Dilnesa, Lothenbach 2014, C4AF reacts with C2S and C3S to form hydrogarnets
         dalphaR['RfC4AF']=d_reac['RfC4AF'].react(dalphaC4AF,compo,N0['C4AF'])
         dalphaR['ReC4AF']=d_reac['ReC4AF'].react(dalphaC4AF-dalphaR['RfC4AF'],compo,N0['C4AF'])
         
@@ -1255,9 +1255,9 @@ class Hydrationmodel:
             volume=1.
         state['phi_cap']=1-volume
                 
-        #TODO 2 : la porosite capillaire et le retrait de la pâte de ciment doivent être mis à jour en prenant en compte la fraction de filler.
+        #TODO 2 : the capillary porosity and shrinkage of the cement paste must be updated taking into account the filler fraction.
         
-        #calcul de la teneur en eau : masse d'eau encore à secher sur masse d'eau complétement humide.
+        #calculation of the moisture content: mass of water still to be dried over the mass of water at full saturation.
         state['moisture']=((4-1.4)*state['compo']['CSH']+state['compo']['H']+(3.9-1.4)*state['compo']['CSHp'])*M['H']/(((4-1.4)*state['compo']['CSH']+state['compo']['H']+(3.9-1.4)*state['compo']['CSHp'])*M['H']-3*state['eps_ch'])
         #calcul du degagement de chaleur:
         deltaH=0
@@ -1361,11 +1361,11 @@ class Hydrationmodel:
         fracvolleft-=fracvol['FH3']
         
         #calcul de la microstructure au niveau du gel:
-        # Tennis et Jennis : on va confondre CSH-LD et surface specifique accessible au N2
-        # Tennis et Jennings donne un rapport de surfaces entre CSH-LD et CSH total, appelé rapport de masse dans l'article
-        #on part du principe que ce ratio est un rapport de nombre de globules, cad un rapport de nombre de mol.
-        #le alpha tot de T et J est un rapport de volume
-        #du reste, il est proche du rapport de masse.
+        # Tennis and Jennings: CSH-LD is equated with the N2-accessible specific surface area
+        # Tennis and Jennings give a surface area ratio between CSH-LD and total CSH, referred to as a mass ratio in the article
+        #it is assumed that this ratio is a ratio of globule numbers, i.e. a molar ratio.
+        #the total alpha of T & J is a volume ratio
+        #moreover, it is close to the mass ratio.
         alpha=1-fracvol['anhydre']/(N0['C3S']*v['C3S']+N0['C2S']*v['C2S']+N0['C3A']*v['C3A']+N0['C4AF']*v['C4AF'])
         
         state['alpha']=alpha
@@ -1380,21 +1380,21 @@ class Hydrationmodel:
         #vCSHLD=127.
         #vCSHHD=105.
         #print 'MCSH',M['CSH']-2.5*M['H'], "mcshp", M['CSHp']-2.4*M['H']
-        #la masse de CSH LD (sec) est fonction de la masse totale de CSH (sec), Tennis & Jennings 2000 CCR 30 [6]
-        #le CSH sec correspond à H=1.5, soit 2.5H de moins que le CSH classique
+        #the dry mass of CSH-LD is a function of the total dry CSH mass, Tennis & Jennings 2000 CCR 30 [6]
+        #dry CSH corresponds to H=1.5, i.e. 2.5H less than the standard CSH
         #rhoCSHLD=1.44
         rhoCSHLD=1.44
         
-        #model de Konigsberger et. al. 2016 : la densité du CSH dépend de l'espace disponible.
-        #Nombre de mol de CSH
+        #model of Konigsberger et al. 2016: the density of CSH depends on the available space.
+        #Number of moles of CSH
         nCSH=state['compo']['CSH']+state['compo']['CSHp']
-        #volume de CSH dense, en cm3
+        #volume of dense CSH, in cm3
         vsCSH=nCSH*72.1
-        #volume total disponible
+        #total available volume
         vavail=state['phi_cap']+state['compo']['CSH']*v['CSH']+state['compo']['CSHp']*v['CSHp']
-        
+
         #print "vavail",vavail,"vsCSH",vsCSH,"frac_solid",vsCSH/(vavail+vsCSH)
-        #porosité totale
+        #total porosity
         gamma=(vavail-vsCSH)/vavail
         #if gamma>0.55:
         #    rhoCSHLD=1.44-(gamma-0.55)*(1.44-0.8)/(1-0.55)
@@ -1408,20 +1408,20 @@ class Hydrationmodel:
             
         if mCSHLDdry>mCSHdrytot:
             mCSHLDdry=mCSHdrytot
-        #la densité sèche du CSH LD est de 1.44, celle du CSH HD dry est de 1.75
+        #the dry density of CSH-LD is 1.44, that of dry CSH-HD is 1.75
         vvCSHLD=mCSHLDdry/rhoCSHLD
         vvCSHHD=(mCSHdrytot-mCSHLDdry)/1.75
         vvCSHLP=0
         '''
-        #introduction d'un CSH de très basse densité
-        #model de Konigsberger et. al. 2016
-        #Nombre de mol de CSH
+        #introduction of a very low density CSH
+        #model of Konigsberger et al. 2016
+        #number of moles of CSH
         nCSH=state['compo']['CSH']+state['compo']['CSHp']
-        #volume de CSH dense, en cm3
+        #volume of dense CSH, in cm3
         vsCSH=nCSH*72.1
-        #volume total disponible
+        #total available volume
         vavail=state['phi_cap']+state['compo']['CSH']*v['CSH']+state['compo']['CSHp']*v['CSHp']
-        #porosité totale
+        #total porosity
         gamma=(vavail-vsCSH)/vavail
         
         mCSHLPdry=(0.1+(gamma-0.56)*0.9/(1.-0.56))*mCSHLDdry
@@ -1491,10 +1491,10 @@ class Hydrationmodel:
         
         vavail=state['compo']['H']*v['H']+state['compo']['CSH']*v['CSH']+state['compo']['CSHp']*v['CSHp']
         #print "vavail",vavail,"vsCSH",vsCSH,"frac_solid",vsCSH/(vavail+vsCSH)
-        #porosité totale
+        #total porosity
         gamma=(vsCSH)/vavail
         #print 'time',state['time'], 'gamma',gamma, 'tot vnull', state['phi_cap']+state['compo']['CSH']*v['CSH']+state['compo']['CSHp']*v['CSHp']-(1-0.942)*vavail
-        #quantité de volume de CSH-A
+        #volume of CSH-A
         VCSHA=0
         VCSHB=0
         rhoCSHB=0
@@ -1505,7 +1505,7 @@ class Hydrationmodel:
                 VCSHA=(1.-0.942)*vavail
             else:
                 VCSHA=stateprev['VCSHA']
-            #la densité du CSH B
+            #the density of CSH-B
             rhoCSHB=(0.901-0.411*gamma)*2.604
             VCSHB=(2.604-1)*(vsCSH-VCSHA)/(rhoCSHB-1.)
         VCSH=VCSHA+VCSHB
@@ -1522,11 +1522,11 @@ class Hydrationmodel:
         
         state['fracvol']=fracvol
         
-        #stokage de la masse de CH/masse ciment et de la quantité d'eau liée/ masse ciment
+        #storage of CH mass/cement mass and chemically bound water content/cement mass
         masscement=1./(self.wsc+1./self.binder.getrho())
         state['wCH']=M['CH']*state['compo']['CH']/masscement
-        #calcul de la quantité d'eau liée chimiquement
-        # P-dried density of C-S-H, d'après Brouwers
+        #calculation of the chemically bound water content
+        # P-dried density of C-S-H, according to Brouwers
         state['wb']=(1.2*(state['compo']['CSH']+state['compo']['CSHp']))
         #state['wb']=(2.1*(state['compo']['CSH']+state['compo']['CSHp'])) #2.1 pour 11%RH
         state['wb']+=state['compo']['CH']
@@ -1543,7 +1543,7 @@ class Hydrationmodel:
             state['wCH']=state['wCH']*(self.massc)/(self.massc+self.aggregate['filler']['mass'])
             state['wb']=state['wb']*(self.massc)/(self.massc+self.aggregate['filler']['mass'])
             
-        #le degree d'hydratation massique
+        #the mass-based degree of hydration
         alpha=1-(state['compo']['C3S']*M['C3S']+state['compo']['C2S']*M['C2S']+state['compo']['C3A']*M['C3A']+state['compo']['C4AF']*M['C4AF'])/(N0['C3S']*M['C3S']+N0['C2S']*M['C2S']+N0['C3A']*M['C3A']+N0['C4AF']*M['C4AF'])
         state['alpham']=alpha
         
@@ -1552,10 +1552,10 @@ class Hydrationmodel:
             alphap=1-(state['compo']['SS']*M['SS']+state['compo']['A']*M['A'])/(N0['SS']*M['SS']+N0['A']*M['A'])
         state['alphamp']=alphap
         
-        # la porosité capillaire (>40% RH...)
-        # le volume d'eau dans cette porosité capilaire
+        # the capillary porosity (>40% RH...)
+        # the volume of water in this capillary porosity
         
-        # l'eau capillaire à partir de d=2.6nm, à plus que 40% RH au premier séchage. QENS : H=2.65 rho=2.31 molar mass 203, molar vol 88
+        # capillary water from d=2.6nm, above 40% RH at first drying. QENS: H=2.65 rho=2.31 molar mass 203, molar vol 88
         Vp=1.
         Vp-=state['compo']['C3S']*v['C3S']+state['compo']['C2S']*v['C2S']+state['compo']['C3A']*v['C3A']+state['compo']['C4AF']*v['C4AF']
         Vp-=state['compo']['SS']*v['SS']+state['compo']['A']*v['A']+state['compo']['CCb']*v['CCb']
@@ -1567,7 +1567,7 @@ class Hydrationmodel:
         Vp-=state['compo']['C3AH6']*v['C3AH6']
         Vp-=state['compo']['FH3']*v['FH3']
         
-        # l'eau capillaire à partir de d=2.6nm, à plus que 40% RH au premier séchage. QENS : H=2.65 rho=2.31 molar mass 203, molar vol 88
+        # capillary water from d=2.6nm, above 40% RH at first drying. QENS: H=2.65 rho=2.31 molar mass 203, molar vol 88
         Vp-=state['compo']['CSH']*89.+state['compo']['CSHp']*79.5
         Vfree=(state['compo']['H']+state['compo']['CSH']*(4.-2.7)+state['compo']['CSHp']*(3.9-2.7))*v['H']
         
@@ -1848,7 +1848,7 @@ if __name__ == '__main__':
     #B11 : CPJ45 Airvault
     #binder.addbinderBogue(100,{'C3S':63.6,'C2S':9.4, 'C3A':6.7, 'C4AF':8.8,'CSb':3.5,'CCb':2.7}, 380)
     
-    #BHP :266kg CPJ45 Airvault, 40,3 fumée silice, 57 filler calcaires
+    #HPC: 266kg CPJ45 Airvault, 40.3 silica fume, 57 limestone filler
     #eau 161
     
     binder.addbinderBogue(100*266./(266.+40.3+57.),{'C3S':63.6,'C2S':9.4, 'C3A':6.7, 'C4AF':8.8,'CSb':3.5,'CCb':2.7}, 380.)

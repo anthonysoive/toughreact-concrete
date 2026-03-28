@@ -6,7 +6,7 @@ Created on Thu Apr 11 13:29:20 2019
 @author: anthonysoive
 """
 
-print("Calcul de la propagation d'eau de mer dans le béton M70-30FA...")
+print("Computing seawater propagation in M70-30FA concrete...")
 
 ep_eau = 0.0001
 ep_struct = 0.03
@@ -18,7 +18,7 @@ points_struct = [P2,P3]
 points_eau = [P1,P2]
 
 import  geometry.constrgeom
-#Construction du maillage et affectation de numéros par zone et pour les conditions aux limites
+#Mesh construction and assignment of zone numbers and boundary condition identifiers
 points_struct = [P2,P3]
 nElem={'X':500,'Y':1,'Z':1}
 raison_suite = 0.999
@@ -98,9 +98,9 @@ print(materiau.minerals)
 
 
 ###############################################################################
-humidite_relative_ext = [70] #humidité relative extérieure
-temperature_ext = [20] #température extérieure
-P_atm = [1.013e5] #pression atmosphérique
+humidite_relative_ext = [70] #external relative humidity
+temperature_ext = [20] #external temperature
+P_atm = [1.013e5] #atmospheric pressure
 Pp_co2 = 0.0#3.549e-4
 
 boundary_solution = [{'composition' : {'h2o': 0.1000E+01,'H+': 1e-7,'Ca+2': 1e-30,'SO4-2': 0.03550,
@@ -108,7 +108,7 @@ boundary_solution = [{'composition' : {'h2o': 0.1000E+01,'H+': 1e-7,'Ca+2': 1e-3
                                       'Al+3': 1.000e-30,'Cl-': 0.62336},
                     'temperature' : 20.0}]
 
-#Evolution dans le temps de la température de la solution (liste de valeurs)
+#Time evolution of the solution temperature (list of values)
 temperature_eau = [20.0]
 
 heure = 3600.
@@ -127,7 +127,7 @@ CL = {'maree':['left']}
 
 ep_couche_limite = 2e-5#20e-2
 
-eos = 'eos9'#type de module utilisé dans toughreact
+eos = 'eos9'#type of module used in toughreact
 
 #Options de calcul
 pitzer = False#True#

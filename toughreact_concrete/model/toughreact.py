@@ -29,8 +29,8 @@ from toughreact_concrete.model.conversion_species import *
 # kuzel_salt = 'KUZEL_SALT'
 # c3ah6 = 'C3AH6'
 # gypsum = 'GYPSUM'
-##On enlève les dolomite, magnesite, gibbsite, chrysotile, anhydrite
-##On enlève le 'gypsum' en présence d'eau de mer
+##Removing dolomite, magnesite, gibbsite, chrysotile, anhydrite
+##Removing 'gypsum' in the presence of seawater
 list_minerals_kinetics = ['JENNITE', 'TOBERMORITE', 'MONOSULFOALUMINATE',
                           'ETTRINGITE', 'HYDROTALCITE', 'PORTLANDITE', 'FRIEDEL_SALT', 'BRUCITE',
                           'CALCITE', 'MONOCARBOALUMINATE', 'ARAGONITE',
@@ -38,7 +38,7 @@ list_minerals_kinetics = ['JENNITE', 'TOBERMORITE', 'MONOSULFOALUMINATE',
                           'C3AH6', 'GYPSUM', 'KUZEL_SALT', 'CHRYSOTILE']#,'GIBBSITE', 'C3AFS0.84H4.32'] # 'C3FS1.34H3.32', #'Ferrihydrite(2L)', , 'C3AS0.84H4.32'
 list_minerals = list_minerals_kinetics #+ ['PERICLASE', 'SEPIOLITE']
 
-list_complexes = ['tobermorite','jennite']#,'C3AS0.84H4.32','monosulfoaluminate','portlandite' #Pour le monosulfoaluminate, c'est une façon de rendre compte d'une transformation de monosulfoaluminate en sels de Kuzel par échange anionique SO4 => Cl
+list_complexes = ['tobermorite','jennite']#,'C3AS0.84H4.32','monosulfoaluminate','portlandite' #For monosulfoaluminate, this is a way to account for a transformation of monosulfoaluminate into Kuzel salts by anionic exchange SO4 => Cl
 name_complexe_database = {
     'jennite': 'CSH_OH',
     'tobermorite': 'CSH_OH1',
@@ -49,21 +49,21 @@ name_complexe_database = {
 
 #Tobermorite => C/S = 0.83
 #Jennite => C/S = 1.67
-specific_surface_area = {#en cm2/g
-    #'tobermorite': 300 * 1e4,#Yoshida et al. 2021 à partir des figures 3 et 5
-    #'jennite': 225 * 1e4,#Yoshida et al. 2021 à partir des figures 3 et 5
+specific_surface_area = {#in cm2/g
+    #'tobermorite': 300 * 1e4,#Yoshida et al. 2021 from figures 3 and 5
+    #'jennite': 225 * 1e4,#Yoshida et al. 2021 from figures 3 and 5
     'tobermorite': 500 * 1e4,# Soive et al., 2017
     'jennite': 500 * 1e4,#Soive et al., 2017
-    'C3AS0.84H4.32': 275 * 1e4,#Yoshida et al. 2021 à partir des figures 3 et 5
+    'C3AS0.84H4.32': 275 * 1e4,#Yoshida et al. 2021 from figures 3 and 5
     'portlandite': 14.31 * 1e4,#Elakneswaran et al.,2009
     'monosulfoaluminate': 600 * 1e4,
     'msh': 300 * 1e4
 }
 Avogadro = 6.0221408e+23
-surface_site_density = {#mol/m2 de solide = nm-2 * 1e18 /avagadro
-    'tobermorite': 4.3 * 1e18 / Avogadro,#Yoshida et al. 2021 à partir de la figure 5
-    'jennite': 7 * 1e18 / Avogadro,#Yoshida et al. 2021 à partir de la figure 5
-    'C3AS0.84H4.32': 4.25 * 1e18 / Avogadro,#Yoshida et al. 2021 à partir de la figure 5
+surface_site_density = {#mol/m2 of solid = nm-2 * 1e18 /avogadro
+    'tobermorite': 4.3 * 1e18 / Avogadro,#Yoshida et al. 2021 from figure 5
+    'jennite': 7 * 1e18 / Avogadro,#Yoshida et al. 2021 from figure 5
+    'C3AS0.84H4.32': 4.25 * 1e18 / Avogadro,#Yoshida et al. 2021 from figure 5
     'portlandite': 2.31 * 1e18 / Avogadro,#Payne et al., 2013 in Almendros-Ginesta et al., 2023
     'monosulfoaluminate': 4.25 * 1e18 / Avogadro,
     'msh': 4.25 * 1e18 / Avogadro
@@ -226,10 +226,10 @@ def ecriture_chemical_equilibre(database,minerals_list,species,temperature,compl
     minerals, list_ordonnee = conversion_database(database, minerals_list)
     txt_minerals_0 = declare_minerals(database,minerals,kinetics)
     txt_minerals = declare_minerals_init(database,minerals,kinetics)
-    #Déclaration des espèces ioniques
+    #Declaration of ionic species
     txt_species_0 = ''
     #for elem in self.init_species.keys():
-    #choix de la liste ordonnée en fonction de la base de données
+    #choice of the ordered list based on the database
     for elem in list_ordonnee:
         if elem.upper() in [tmp.upper() for tmp in species.keys()]:
             txt_species_0 += "'" + elem + "'      0\n"
@@ -298,7 +298,7 @@ def ecriture_chemical_transport_reactif(database, material,bnd_solution,complexa
     temperature_solution = bnd_solution['temperature']
     txt_minerals_0 = declare_minerals(database,minerals,kinetics)
     txt_minerals = declare_minerals_init(database,minerals,kinetics)
-    #Déclaration des espèces ioniques
+    #Declaration of ionic species
     txt_species_0 = ''
     txt_Kd_0 = ''
     #for elem in self.init_species.keys():
@@ -407,7 +407,7 @@ def ecriture_chemical_transport_reactif(database, material,bnd_solution,complexa
 
 def ecriture_chemical_equilibre_boundary_solution(database,species,temperature):
     result=open("trame_chemical_bnd_solution.inp").read()
-    #Déclaration des espèces ioniques
+    #Declaration of ionic species
     txt_species_0 = ''
     #for elem in self.init_species.keys():
     minerals, list_ordonnee = conversion_database(database, {})
@@ -432,7 +432,7 @@ def ecriture_chemical_equilibre_boundary_solution(database,species,temperature):
     open("chemical.inp","w").write(result)
 
 def recup_txt_species(nb_lines = 13):
-    '''lecture chdump -> recupération des espèces ioniques (guess et ctotal)'''
+    '''read chdump -> retrieve ionic species (guess and ctotal)'''
     txt_species=open("chdump.out").readlines()
     nb_lines = 0
     while '# component  flag    guess' not in txt_species[-nb_lines-1]:
@@ -455,7 +455,7 @@ def recup_txt_species(nb_lines = 13):
     return species#new_txt_species
 
 def recup_minerals(exe_ini, minerals, database):
-    '''lecture solid.out -> récupération des frations volumiques des espèces minérales'''
+    '''read solid.out -> retrieve volume fractions of mineral species'''
     file = "solid.out"
     result = open(file).readlines()[-1:]
     list_val = result[0].split()
@@ -512,7 +512,7 @@ def recup_minerals(exe_ini, minerals, database):
 #    return recup_txt_species(), recup_minerals(exe_ini, minerals)
 
 def declare_minerals(database,minerals,kinetics):
-    #Déclaration des espèces minérales
+    #Declaration of mineral species
     list_minerals = [mineral_database[database][mineral].upper() for mineral in list_minerals_kinetics]
     txt_minerals_0 = ''
     txt_tmp = ''

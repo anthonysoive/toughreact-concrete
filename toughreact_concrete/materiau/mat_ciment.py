@@ -62,8 +62,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
     def __init__(self, nom_mat: str) -> None:
         self.nom_mat = nom_mat
         self.name = self.modif_name(nom_mat)
-        self.P_atm = 101500. #en Pascals
-        self.age_cure = 10000. #completement hydraté par défaut
+        self.P_atm = 101500. #in Pascals
+        self.age_cure = 10000. #fully hydrated by default
         self.degre_hydratation = 99.0
         self.result_hydration = {}
         self.Sl_init = 0.99
@@ -126,7 +126,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
         klinkenberg_default = 1.e5
         self.params_model = {'adsorb_desorb':modele_adsorb_desorb, 'klinkenberg':klinkenberg_default}
         
-        self.age_cure = temps_cure #completement hydraté par défaut
+        self.age_cure = temps_cure #fully hydrated by default
         
         #----------------------------------------------------------------------
         def Bogues_revisited(composition):
@@ -215,7 +215,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
             return composition_Bogues
         #----------------------------------------------------------------------
         
-        #Conversion de la composition du ciment en C3S, C3A, C4AF... (données d'entrée du modèle d'hydration)
+        #Conversion of cement composition into C3S, C3A, C4AF... (input data for the hydration model)
         masse_totale_binder = 0
         for elem in self.formulation['binder']:
             self.formulation['binder'][elem]['compo']['composition_Bogues'] = {}
@@ -236,12 +236,12 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
                 self.formulation['binder'][elem]['compo']['composition_Bogues'] = Bogues_revisited(self.formulation['binder'][elem]['compo']['composition'])
             print("Composition de Bogue pour ",elem,": ", self.formulation['binder'][elem]['compo']['composition_Bogues'])
             masse_totale_binder += self.formulation['binder'][elem]['kg']
-        #récupération du résultat du calcul d'hydratation
-        #-fracvol est exprimé en cm3/cm3 de matériau (de béton)
+        #retrieval of the hydration calculation result
+        #-fracvol is expressed in cm3/cm3 of material (concrete)
         output_hydration = calcul_hydratation(self.formulation,temps_cure)
         for elem in output_hydration['fracvol']:
             if elem not in ['bigcapillaryvoids','anhydre','A','C3AFSH4','SS','C4AF','C3A','C3S','C2S','CSHLP']:#,'CSHHD','CSHLD'
-                #fraction volumique de solide dans la pâte de ciment
+                #volume fraction of solid in the cement paste
                 if output_hydration['fracvol'][elem] > 0:
                     self.minerals[hydrat_thermoddem[elem].upper()] = output_hydration['fracvol'][elem] #/(1-output_hydration['phic'])
                 else:
@@ -249,35 +249,35 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
             else:
                 print(elem,output_hydration['fracvol'][elem])#/(1-output_hydration['phic']))
 
-        #Conversion en fraction volumique de solide dans le matériau cimentaire
-        #g : fraction volumique de granulats
+        #Conversion to volume fraction of solid in the cementitious material
+        #g : volume fraction of aggregates
         #g = sum([self.formulation['granulats'][elem]['kg'] / (self.formulation['granulats'][elem]['nature']['densite']*1000.) for elem in self.formulation['granulats']])
         for elem in self.minerals:
             self.minerals[elem] = self.minerals[elem] / (1-self.porosite)# * (1-g)
         
-        q_C3A = output_hydration['fracvol']['C3A'] * 3.03 / 270.3# * (1-g) #mol/cm3 de matériau
-        print("Quantité de C3A (mol/cm3 de matériau) : ",q_C3A)
-        q_C3S = output_hydration['fracvol']['C3S'] * 3.15 / 228.4 # * (1-g) #mol/cm3 de matériau
-        print("Quantité de C3S (mol/cm3 de matériau) : ",q_C3S)
-        print("Quantité de chlorures potentiels fixés à partir des C3A (g/100g de matériau) : ",min([q_C3A,q_C3S])*35.5*2/2.4*100)
-        #print("Quantité de C2S (mol/cm3 de matériau) : ",output_hydration['fracvol']['C2S'] * (1-g) *3.28 / ...)
-        #print("Quantité de C4AF (mol/cm3 de matériau) : ",output_hydration['fracvol']['C4AF'] * (1-g) *3.73 / ...)
+        q_C3A = output_hydration['fracvol']['C3A'] * 3.03 / 270.3# * (1-g) #mol/cm3 of material
+        print("Amount of C3A (mol/cm3 of material): ",q_C3A)
+        q_C3S = output_hydration['fracvol']['C3S'] * 3.15 / 228.4 # * (1-g) #mol/cm3 of material
+        print("Amount of C3S (mol/cm3 of material): ",q_C3S)
+        print("Potential amount of chlorides bound from C3A (g/100g of material): ",min([q_C3A,q_C3S])*35.5*2/2.4*100)
+        #print("Amount of C2S (mol/cm3 of material): ",output_hydration['fracvol']['C2S'] * (1-g) *3.28 / ...)
+        #print("Amount of C4AF (mol/cm3 of material): ",output_hydration['fracvol']['C4AF'] * (1-g) *3.73 / ...)
 
         self.degre_hydratation = output_hydration["alpha"]
-        print("degré d'hydratation moyen : ",self.degre_hydratation)
+        print("average hydration degree: ",self.degre_hydratation)
         #nb_mol_Jennite = elem,output_hydration['fracvol']["CSHHD"]/(1-output_hydration['phic'])/78.
         #nb_mol_Tobermorite = elem,output_hydration['fracvol']["CSHLD"]/(1-output_hydration['phic'])/59.
         #print("nb mol/cm3 de Jennite :",nb_mol_Jennite)
         #print("nb mol/cm3 de Tobermorite :",nb_mol_Tobermorite)
 
-        #Calcul de la porosité et du coefficient de diffusion effectif par "homogénéisation" 
-        #à partir de la porosité de la pâte et la fraction volumique de granulats
-        #Pour le coefficient de diffusion effectif de la pâte, on considère 
-        #qu'il est égal à 5.e-13
+        #Calculation of porosity and effective diffusion coefficient by "homogenisation"
+        #from the paste porosity and the aggregate volume fraction
+        #For the effective diffusion coefficient of the paste, it is assumed
+        #to be equal to 5.e-13
         #self.porosite = output_hydration['phic'] * (1-g)
         #self.indicateurs_deduits['D_eff'] = 1.e-12 / (1+g/2.)/(1-g)
-        #print("porosité calculée : ",self.porosite)
-        #print("coefficient de diffusion effectif calculée : ",self.indicateurs_deduits['D_eff'])
+        #print("calculated porosity: ",self.porosite)
+        #print("calculated effective diffusion coefficient: ",self.indicateurs_deduits['D_eff'])
         
         dict_minerals_database = toughreact.lecture_database(self.database)
         material_species = []
@@ -316,14 +316,14 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
         self.species['H2O'] = {'guess':1.0,'ctotal':1.0}
         self.species['H+'] = {'guess':1.0E-13,'ctotal': -0.4070E-01}
         
-        #print("fraction volumique des espèces solides : ",self.minerals)
-        #print("concentration molaire des espèces ioniques : ",self.species)
+        #print("volume fraction of solid species: ",self.minerals)
+        #print("molar concentration of ionic species: ",self.species)
         
         fracvol_minerals_total = sum([self.minerals[elem] for elem in self.minerals])
-        #print("Fraction volumique des minéraux ractifs : ",fracvol_minerals_total)
+        #print("Volume fraction of reactive minerals: ",fracvol_minerals_total)
         # fracvol_minerals_prisencompte = fracvol_minerals_total - self.minerals['C3FS1.34H3.32'] - self.minerals['C3AS0.84H4.32'] - self.minerals['C3AH6']
         fracvol_minerals_prisencompte = fracvol_minerals_total - self.minerals['C3AFS0.84H4.32'] - self.minerals['C3AH6']
-        #print("Fraction volumique des minéraux ractifs prise en compte : ",fracvol_minerals_prisencompte)
+        #print("Volume fraction of reactive minerals taken into account: ",fracvol_minerals_prisencompte)
     
     def calcul_Na_K_solution(self,species):
         Na2O = sum([self.formulation['binder'][elem]['compo']['composition']['Na2O'] for elem in self.formulation['binder']])
@@ -394,8 +394,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
         return 100 * math.exp(-(Pc_new*physical_const.M_w)/(physical_const.rho_wl*physical_const.R*(T + 273.15)))
     
     def convert_hydrat_thermoddem(self, compo_hydrat):
-        '''Conversion du dictionnaire issu du calcul d'hydratation en dictionnaire
-        d'espèces connues dans la base de données thermoddem du BRGM'''
+        '''Converts the dictionary produced by the hydration calculation into a dictionary
+        of species known in the BRGM thermoddem thermodynamic database'''
         dict_thermoddem = {}
         for elem in compo_hydrat.keys():
             dict_thermoddem[hydrat_thermoddem[elem]] = compo_hydrat[elem]
@@ -418,8 +418,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         self.age_cure = age_cure #en jours
 #         self.degre_hydratation = self.result_hydrat(3600.*24.*self.age_cure)["deghyd"]
 #         if self.degre_hydratation < 0.4:
-#             print "Attention ! Un degré d'hydratation initial inférieure à 0.4"
-#             print "n'est pas pris en compte dans ce modèle"
+#             print "Warning! An initial hydration degree below 0.4"
+#             print "is not taken into account in this model"
 #         self.porosite_ref = mesures_ref['porosite']
 #         if self.degre_hydratation > 0.94:
 #             self.porosite = self.porosite_ref
@@ -433,28 +433,28 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         self.permeabilite = self.calcul_Kl(self.porosite)
 #         self.krl_model = modeles_mat['krl']
 #         self.pc_model = modeles_mat['pc']
-#         self.P_atm = 101500. #en Pascals
+#         self.P_atm = 101500. #in Pascals
 #         self.humidite_relative = 99
 #         self.tortuosite = tortuosite
 #         self.cl_adsorption_csh = modeles_mat['cl_adsorption_csh']
 #         self.klinkenberg = klinkenberg
     
 #     def ecriture_class(self):
-#         print "formulation : ",self.formulation
-#         print "composition du ciment : ",self.compo_ciment
-#         print "durée de la cure (en jours) : ",self.age_cure
-#         print "degré d'hydratation : ",self.degre_hydratation
-#         print "composition du matériau hydraté (après la cure) : ",self.result_hydration(3600.*24.*self.age_cure)
-#         print "porosité : ",self.porosite
-#         print "température : ",self.temperature
-#         print "perméabilité de référence : ",self.permeabilite_ref, " pour une porosité de référence de : ",self.porosite_ref
-#         print "perméabilité : ",self.permeabilite
-#         print "modèle de perméabilité relative : ",self.params_model['adsorb_desorb']['krl']
-#         print "modèle de pression capillaire : ",self.params_model['adsorb_desorb']['pc']
+#         print "formulation: ",self.formulation
+#         print "cement composition: ",self.compo_ciment
+#         print "curing duration (in days): ",self.age_cure
+#         print "hydration degree: ",self.degre_hydratation
+#         print "composition of hydrated material (after curing): ",self.result_hydration(3600.*24.*self.age_cure)
+#         print "porosity: ",self.porosite
+#         print "temperature: ",self.temperature
+#         print "reference permeability: ",self.permeabilite_ref, " for a reference porosity of: ",self.porosite_ref
+#         print "permeability: ",self.permeabilite
+#         print "relative permeability model: ",self.params_model['adsorb_desorb']['krl']
+#         print "capillary pressure model: ",self.params_model['adsorb_desorb']['pc']
     
 #     def _porosite(self):
-#         '''Retourne une fonction qui permet de calculer la porosité en fonction
-#         du degré d'hydratation du matériau cimentaire'''
+#         '''Returns a function that computes the porosity as a function
+#         of the hydration degree of the cementitious material'''
 #         def content(degre_hydratation):
 #             return self.result_hydrat(0.)["phi"]*(1-param_hydrat['mu']*\
 #             self.formulation['c']/self.formulation['e']*degre_hydratation) #these Nguyen (3.76)
@@ -481,7 +481,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         return (1+(-c*math.log(x))**n)**(-m) #f(RH), fprime(RH)
 # 
 #     def param_pc_RH(self):
-#         '''Calcul des coefficients de l'équation polynomiale (cf. Nguyen/Thierry)'''
+#         '''Computes the coefficients of the polynomial equation (cf. Nguyen/Thierry)'''
 #         def content(degre_hydratation):
 #             x = param_hydrat['rh_lim_theta']
 #             by = misc.derivative(self.theta_RH,x, dx=1e-6)
@@ -498,8 +498,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         return content
 # 
 #     def slpc_RH(self,rh):
-#         '''calcul de la saturation en liquide et de la pression capillaire en
-#         fonction de RH'''
+#         '''Computes the liquid saturation and capillary pressure as a
+#         function of RH'''
 #         def content(degre_hydratation):
 #             porosite = self._porosite()(degre_hydratation)
 #             rho_app = self._rho_app()(degre_hydratation)
@@ -513,8 +513,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #             #pc = np.zeros(len(rh))
 #             w_etoile = []
 #             A,B,C = self.param_pc_RH()(degre_hydratation)
-#             #psi = self.params_hyd_sech['psi'] #ce paramètre intervient dans la thèse de Nguyen (p.184)
-#             #afin de s'affranchir de la teneur en CSH
+#             #psi = self.params_hyd_sech['psi'] #this parameter appears in Nguyen's thesis (p.184)
+#             #in order to remove the dependency on CSH content
 #             if rh < 0.44:
 #                 tmp_w_etoile = self.theta_RH(rh)
 #                 pc = -rho_E*R*T/Mv*math.log(rh)
@@ -546,21 +546,21 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         return d_alpha_dt
 # 
 #     def eau_consom_hydrat(self,d_degre_hydrat):
-#         '''Eau consommée par l'hydratation du béton'''
+#         '''Water consumed by the hydration of concrete'''
 #         w_ult = param_hydrat['lambda_'] * self.formulation['c'] / physical_const.rho_wl
 #         #print 'Sl ',Sl 
 #         return w_ult*d_degre_hydrat
 # 
 #     def hydration(self,liquid_saturation,duree):
-#         '''Rends la saturation effective en liquide et le volume d'eau consommée
-#         par l'hydratation à partir d'une saturation en liquide et d'une durée'''
+#         '''Returns the effective liquid saturation and the volume of water consumed
+#         by hydration from a liquid saturation and a duration'''
 #         tmp_porosity = self._porosite()(self.degre_hydratation)
 #         sl_lim_hydrat, tutu = self.slpc_RH(param_hydrat['rh_lim_hydrat'])(self.degre_hydratation)
 #         
 #         # Times at which the solution is to be computed.
 #         t = np.linspace(0, duree, 2)
-#         #boucle itérative pour trouver le degré d'hydratation et les autres 
-#         #paramètres comme la porosité, rh_70_Sl...
+#         #iterative loop to find the hydration degree and the other
+#         #parameters such as porosity, rh_70_Sl...
 #         list_degre_hydrat = [0,self.degre_hydratation]
 #         while (list_degre_hydrat[-1]-list_degre_hydrat[-2]) > 1.0e-7:
 #             degre_hydrat = integrate.odeint(self.cinetique_hydratation, 
@@ -584,7 +584,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 # #        print self.name
 # #        print 'Porosity :',self.porosity
 # #        print 'Sl_70 : ',self.rh_70_Sl
-# #        print 'Degré hydratation : ',self.degre_hydrat
+# #        print 'Hydration degree: ',self.degre_hydrat
 # #        print 'Saturation effective :',Sl
 # #        print '**************************'
 #         return Sl, eau_consom
@@ -594,7 +594,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         ((1-self.porosite_ref)/(1-porosite))**2
 #     
 #     def calcul_krl_pc(self):
-#         '''Calcul des paramètres de permeabilité relative et pression capillaire'''
+#         '''Computes the relative permeability and capillary pressure parameters'''
 #         tab_rh = np.arange(0.1, 1, 0.01)
 #         x_plot, y_plot = np.zeros(len(tab_rh)),np.zeros(len(tab_rh))
 #         i = 0
@@ -620,8 +620,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 # 
 # 
 #     def update_materiau(self, degre_hydrat):
-#         '''Mets à jour les propriétés du matériau en fonction du degré
-#         d'hydratation'''
+#         '''Updates the material properties as a function of the hydration
+#         degree'''
 #         self.degre_hydratation = degre_hydrat
 #         self.porosite = self._porosite()(degre_hydrat)
 #         self.permeability = self.calcul_Kl(self.porosite)
@@ -630,12 +630,12 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         self.params_model['adsorb_desorb']['pc']['params'] = params_pc
 #         
 #         #######################
-#         #+ Minéraux et ions...
+#         #+ Minerals and ions...
 #     
 #     def compo_mat_hydrat(self,degre_hydrat):
-#         '''Renvoie la composition du matériau cimentaire hydraté en fonction du 
-#         degré d'hydratation. Cela comprend les espèces minérales et ioniques.'''
-#         #Durée en jours au-delà duquel l'hydratation est supposée complète
+#         '''Returns the composition of the hydrated cementitious material as a function of
+#         the hydration degree. This includes mineral and ionic species.'''
+#         #Duration in days beyond which hydration is assumed complete
 #         duree_initiale = 100.
 #         duree = duree_initiale
 #         tmp_degre_hydrat = self.result_hydrat(3600.*24.*duree)["deghyd"]
@@ -654,15 +654,15 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 
     def input_IC(self, eos: str) -> list[float]:
         #############################
-        #ATTENTION Il faut dissocier IC de BC (on ne parle pas des mêmes températures et HR)
+        #WARNING: IC and BC must be distinguished (they do not refer to the same temperatures and RH)
         #############################
         result = {}
-        #calcul de la pression partiel d'air
+        #calculation of the partial air pressure
         #S_l = #self.result_hydration['moisture']#(1+(alpha*Pc)**n)**(-m)
         S_g = 1-self.Sl_init
         HR = self.HR(self.Sl_init, self.temperature)
         Pa = self.P_atm - HR/100.0*physical_const.Psat(self.temperature + 273.15)
-        #Fraction massique d'air dans l'eau
+        #Mass fraction of air in water
         air_liquid = 26./1000.
         result['eos3'] = [self.P_atm, 10.01, self.temperature]#[self.P_atm, 10+(1-self.Sl_init), self.temperature]#[self.P_atm, 0.015, self.temperature]
         result['eos4'] = [self.P_atm, S_g, Pa]#[self.P_atm, self.temperature, Pa]#[self.P_atm, 10+S_g, self.temperature]#[self.P_atm, self.temperature, self.P_atm]#[self.P_atm, self.temperature, 1.0e4]#
@@ -672,14 +672,14 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
         return result[eos]
 
     def write_toughreact(self, dat, complexation: bool):
-        '''Ecriture dans le format de toughreact.
-        La fonction appelle 'write_tough2' pour la partie hydrique et 'write_react'
-        pour la partie réactive'''
+        '''Write in TOUGHREACT format.
+        The function calls 'write_tough2' for the hydraulic part and 'write_react'
+        for the reactive part'''
         self.write_tough2(dat, complexation)
         return dat
     
     def write_tough2(self, dat, complexation):
-        #Ecriture des paramètres hydriques
+        #Writing of hydraulic parameters
         mat_tmp = t2grids.rocktype(name=self.name,nad=2,density=self.densite,\
         porosity=self.porosite,permeability=3*[self.permeabilite])
         mat_tmp.relative_permeability['type']=7
@@ -699,7 +699,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
         pass
     
 #     def calcul_especes_ioniques_phreeqc(self, dbase):
-#         '''Calcul des espèces ioniques en équilibre avec les espèces minérales'''
+#         '''Computes the ionic species in equilibrium with the mineral species'''
 #         titi_brgm = self.convert_hydrat_thermoddem(self.compo_mat_hydrat(self.degre_hydratation))
 #         # Reaction configuration
 #         input_string = "SOLUTION 1 Pure water\n"
@@ -770,14 +770,14 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #             for elem in titi_brgm.keys():
 #                 if titi_brgm[elem] > 0:
 #                     if np.abs(((titi_brgm[elem]*1000.)-conc[elem][1])/(titi_brgm[elem]*1000.)) > 0.1:
-#                         print "Attention ! L'erreur relative par rapport aux concentrations"
-#                         print "initiales est supérieure à 10% pour : "+elem
+#                         print "Warning! The relative error with respect to the concentrations"
+#                         print "is greater than 10% for: "+elem
 #                         print str(titi_brgm[elem]*1000.)+" "+str(conc[elem][1])
 #                         print np.abs(((titi_brgm[elem]*1000.)-conc[elem][1])/(titi_brgm[elem]*1000.))
 #                 elif conc[elem][1] > 0:
 #                     if np.abs(((titi_brgm[elem]*1000.)-conc[elem][1])/conc[elem][1]) > 0.1:
-#                         print "Attention ! L'erreur relative par rapport aux concentrations"
-#                         print "initiales est supérieure à 10% pour : "+elem
+#                         print "Warning! The relative error with respect to the concentrations"
+#                         print "is greater than 10% for: "+elem
 #                         print str(titi_brgm[elem]*1000.)+" "+str(conc[elem][1])
 #                         print np.abs(((titi_brgm[elem]*1000.)-conc[elem][1])/conc[elem][1])
 # #        test_ecart(titi_brgm, conc)
@@ -811,8 +811,8 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
             return species
         
 #         def volume_fraction_minerals(init_minerals_tmp):
-#             '''Calcul du volume de chaque espèce minérale par volume de solide à partir
-#              des quantités des espèces minérales calculées par le modèle d'hydratation
+#             '''Computes the volume of each mineral species per unit solid volume from
+#              the mineral species quantities calculated by the hydration model
 #              '''
 #         
 #             init_minerals = {}
@@ -831,7 +831,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #             sum([self.result_hydration['compo'][el]*1000.*hydrationDIM_CTOA.d_anhyd[el]['v'] for el in hydrationDIM_CTOA.d_anhyd.keys()]) +\
 #             sum([self.result_hydration['compo'][el]*1000.*hydrationDIM_CTOA.d_gypsum[el]['v'] for el in hydrationDIM_CTOA.d_gypsum.keys()]) +\
 #             sum([self.result_hydration['compo'][el]*1000.*hydrationDIM_CTOA.d_hydrate[el]['v'] for el in hydrationDIM_CTOA.d_hydrate.keys()])
-#             #print "Volume total de solide : ",total_volume_solid
+#             #print "Total solid volume: ",total_volume_solid
 #             for elem in init_minerals.keys():
 #                 #print init_minerals[elem]
 #                 if elem == 'Monosulfoaluminate':
@@ -853,7 +853,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #                    'mg+2':default_value,'al+3':default_value,'co3-2':default_value,'fe+3':default_value}
         init_species = calcul_Na_K_solution(species)
         species_out, minerals_out = toughreact.calcul_equilibre_toughreact_minerals(init_minerals,init_species,self.temperature)
-        #Conversion en fraction volumique de solide de la quantité de minéraux (toughreact renvoie une fraction volumique totale)
+        #Conversion to solid volume fraction of the mineral quantities (toughreact returns a total volume fraction)
         for elem in minerals_out:
             minerals_out[elem] = minerals_out[elem]/(1-self.porosite)
         return species_out, minerals_out
@@ -871,7 +871,7 @@ class MateriauCimentaire(mat_poreux.MateriauPoreux):
 #         self.tps_expo = tps_expo
 if __name__ == '__main__':
     ###########################################################################
-    #Données d'entrée
+    #Input data
     compo_ciment = {}
     #compo_ciment['Maissa']={"C3S":67.8/100.,"C2S":16.6/100.,"C3A":4./100.,
     #"C4AF":7.2/100.,"CSbH2":2.8/100.}
@@ -880,7 +880,7 @@ if __name__ == '__main__':
     #
     
     nom_beton = 'BO'
-    # Formulations de beton
+    # Concrete mix designs
     formulation = {}
     #formulation[nom_beton]={"g12.5/20":733.,"g5/12.5":459.,"g0/5":0.,"s0/4":744.,"c":353.,"e":172.,\
     # "e/ctot":0.5,"e/c":0.49,"g/c":5.48,"phiair":0.012}
@@ -894,8 +894,8 @@ if __name__ == '__main__':
                  formulation[nom_beton]["s0/4"] +\
                  formulation[nom_beton]["c"]
     
-    temperature = 20 #température du matériau en degré celsius
-    age_cure = 365. #en jours
+    temperature = 20 #material temperature in degrees Celsius
+    age_cure = 365. #in days
     mesures_ref = {'permeabilite':4.00e-20,'porosite':0.16}
     krl_model = {'type':'genuchten','params':[4.396e-01,0.0,1.0,0.0]}
     pc_model = {'type':'genuchten','params':[4.396e-01,0.0,5.369e-08,9.381e7,1.0]}
@@ -914,15 +914,15 @@ if __name__ == '__main__':
     tutu1, tutu2 = beton.hydration(0.1,3600*24)
     
     ###########################################################################
-    #Test écriture de la classe
+    #Test class display
     beton.ecriture_class()
     
     ###########################################################################
-    #Test : renvoi des quantités minérales en fonction du degré d'hydratation
+    #Test: return of mineral quantities as a function of hydration degree
     titi = beton.compo_mat_hydrat(1)
     
     dbase = '/Users/anthonysoive/Documents/CR_Nantes_2014_11/02-Modelisation/durabilite_marnage/durability/thermoddem.dat'
     conc_minerals, conc_species = beton.calcul_especes_ioniques_phreeqc(dbase)
     ###########################################################################
     
-    #Test de l'écriture dans tough2
+    #Test of the write to tough2

@@ -49,32 +49,32 @@ class Mesh:
             pos_dx += elem['elements']['X']
         pos_dy += elem['elements']['Y']
         pos_dz += elem['elements']['Z']
-        #Ajouts des éléments participant aux éventuelles conditions limites
+        #Addition of elements participating in possible boundary conditions
         if len(self.CL) > 0:
             if self.CL['maree']:
                 for elem in self.CL['maree']:
                     if elem == 'left':
-                        pos_dx.insert(0,-self.ep_couche_limite) #colonne de gauche !!!!!!!!!!!!!!! Pas vrai si épaisseur d'eau
+                        pos_dx.insert(0,-self.ep_couche_limite) #left column !!!!!!!!!!!!!!! Not true if water thickness
                         self.num_elem['X'] = self.num_elem['X'] + 1
                     if elem == 'right':
-                        pos_dx.append(self.ep_couche_limite) #colonne de droite
+                        pos_dx.append(self.ep_couche_limite) #right column
                         self.num_elem['X'] = self.num_elem['X'] + 1
                     if elem == 'top':
-                        pos_dy.insert(0,self.ep_couche_limite) #colonne du haut
+                        pos_dy.insert(0,self.ep_couche_limite) #top column
                     if elem == 'bottom':
-                        pos_dy.append(self.ep_couche_limite) #colonne du bas
+                        pos_dy.append(self.ep_couche_limite) #bottom column
             if 'infini' in self.CL:
                 for elem in self.CL['infini']:
                     if elem == 'left':
-                        pos_dx.insert(0,5e-5) #colonne de gauche
+                        pos_dx.insert(0,5e-5) #left column
                         self.num_elem['X'] = self.num_elem['X'] + 1
                     if elem == 'right':
-                        pos_dx.append(5e-5) #colonne de droite
+                        pos_dx.append(5e-5) #right column
                         self.num_elem['X'] = self.num_elem['X'] + 1
                     if elem == 'top':
-                        pos_dy.insert(0,geom[-1]['elements']['Y']) #colonne du haut
+                        pos_dy.insert(0,geom[-1]['elements']['Y']) #top column
                     if elem == 'bottom':
-                        pos_dy.append(geom[-1]['elements']['Y']) #colonne du bas
+                        pos_dy.append(geom[-1]['elements']['Y']) #bottom column
         
         #******************************************
         #-----------------  Ecriture des abscisses dans un fichier ----------------
@@ -104,28 +104,28 @@ class Mesh:
             pos_dx = [float(dims['X'])/float(num_elem['X'])]*num_elem['X']
             pos_dy = [float(dims['Y'])/float(num_elem['Y'])]*num_elem['Y']
         #pos_dy = [dims['Y']/float(num_elem['Y'])]*num_elem['Y']
-        #Ajouts des éléments participant aux éventuelles conditions limites
+        #Addition of elements participating in possible boundary conditions
         if len(self.CL) > 0:
             if self.CL['maree']:
                 for elem in self.CL['maree']:
                     if elem == 'left':
-                        pos_dx.insert(0,self.ep_couche_limite) #colonne de gauche
+                        pos_dx.insert(0,self.ep_couche_limite) #left column
                     if elem == 'right':
-                        pos_dx.append(self.ep_couche_limite) #colonne de droite
+                        pos_dx.append(self.ep_couche_limite) #right column
                     if elem == 'top':
-                        pos_dy.insert(0,self.ep_couche_limite) #colonne du haut
+                        pos_dy.insert(0,self.ep_couche_limite) #top column
                     if elem == 'bottom':
-                        pos_dy.append(self.ep_couche_limite) #colonne du bas
+                        pos_dy.append(self.ep_couche_limite) #bottom column
             if 'infini' in self.CL:
                 for elem in self.CL['infini']:
                     if elem == 'left':
-                        pos_dx.insert(0,5e-5) #colonne de gauche
+                        pos_dx.insert(0,5e-5) #left column
                     if elem == 'right':
-                        pos_dx.append(5e-5) #colonne de droite
+                        pos_dx.append(5e-5) #right column
                     if elem == 'top':
-                        pos_dy.insert(0,dims['Y']) #colonne du haut
+                        pos_dy.insert(0,dims['Y']) #top column
                     if elem == 'bottom':
-                        pos_dy.append(dims['Y']) #colonne du bas
+                        pos_dy.append(dims['Y']) #bottom column
         
         #******************************************
         #-----------------  Ecriture des abscisses dans un fichier ----------------
@@ -241,7 +241,7 @@ class Model:
 #     1                          1.000
 
     def write_tough2_atmos(self, humidite_relative, temperature):
-        #Ecriture des paramètres hydriques
+        #Writing hydraulic parameters
         self.atmos = t2grids.rocktype(name='atmos',nad=2,density=1.0e50,\
         porosity=0.999,permeability=3*[1.0e-17])
         self.atmos.relative_permeability['type']=1
@@ -261,7 +261,7 @@ class Model:
         return
     
     def write_tough2_water(self, humidite_relative, temperature):
-        #Ecriture des paramètres hydriques
+        #Writing hydraulic parameters
         self.water = t2grids.rocktype(name='water',nad=2,density=1.0e50,\
         porosity=0.999,permeability=3*[1.0e-17])
         self.water.relative_permeability['type']=5
@@ -276,14 +276,14 @@ class Model:
         return
 
     def add_material(self, material, complexation):
-        '''Ajoute un objet de type MateriauCimentaire
-        Si le degré d'hydratation du matériau est supérieur à 0.9, on considère 
-        que le matériau n'évolue plus. Sinon, à chaque élément du maillage
-        un matériau initialement identique à tous les autres est associé.
-        L'évolution des propriétés de chaque matériau est ensuite propre à chaque élément.
-        
-        Ajoute, en outre, le materiau atmos avec les mêmes propriétés mais avec
-        une porosité de l'ordre de 1'''
+        '''Adds an object of type MateriauCimentaire.
+        If the hydration degree of the material is greater than 0.9, it is considered
+        that the material no longer evolves. Otherwise, each mesh element
+        is associated with a material initially identical to all others.
+        The evolution of each material's properties is then specific to each element.
+
+        Also adds the atmos material with the same properties but with
+        a porosity on the order of 1'''
         self.complexation = complexation
         print("degré d'hydratation du matériau : ",material.degre_hydratation)
         if material.degre_hydratation > 0.2:
@@ -327,10 +327,10 @@ class Model:
                     if BC.type_cond == 'maree':
                         for blk in self.list_blk_bc[elem]:
                             blk.volume = 1.0e52
-                        #Ajout des "matériaux" atmos et water
+                        #Addition of the "materials" atmos and water
                         self.write_tough2_atmos(BC.humidite_relative_ext[0], BC.temperature_ext[0])
                         self.write_tough2_water(BC.humidite_relative_ext[0], BC.temperature_ext[0])
-                        #Ajout du "matériau" REFCO pour eos9
+                        #Addition of the "material" REFCO for eos9
     #                 self.atmos.humidite_relative = BC.humidite_relative_ext[0]
     #                 self.atmos.temperature = BC.temperature_ext[0]
     #                 self.atmos.P_atm = BC.P_atm[0]
@@ -354,8 +354,8 @@ class Model:
         pass
     
     def _init_file(self):
-        '''Définie le répertoire de résultats et efface les fichiers toughreact
-        le cas échéant'''
+        '''Defines the results directory and deletes any existing toughreact files
+        if applicable'''
         self.rep_out = "OUTPUT"
         if os.path.exists(self.rep_out):
             shutil.rmtree(self.rep_out)
@@ -415,40 +415,40 @@ class Model:
         'closure':1e-6}
     
     def _save_mesh(self):
-        '''Sauvegarde du fichier d'abscisses dans le répertoire de résultats'''
+        '''Saves the abscissa file to the results directory'''
         if  os.path.isfile("OUTPUT/Pos_x.txt"):
             os.remove("OUTPUT/Pos_x.txt")
         self.mesh.write_mesh_x()
     
     def calcul_equilibre_hydratation(self):
-        '''Calcul d'equilibre des phases minérales issues du calcul d'hydratation
-        pour obtenir la concentration des espèces ioniques dans la solution, 
-        à la température souhaitée.
-        Le calcul n'est fait qu'une seule fois sur le matériau cimentaire initial.'''
-        #Calcul d'hydratation
+        '''Equilibrium calculation of mineral phases from the hydration calculation
+        to obtain the concentration of ionic species in solution,
+        at the desired temperature.
+        The calculation is performed only once on the initial cementitious material.'''
+        #Hydration calculation
         compo_hydrat = self.list_material[0].compo_mat_hydrat(self.list_material[0].degre_hydratation)
-        #Conversion des noms des espèces minérales pour les adapter à la base de données
-        #utilisée dans Toughreact
+        #Conversion of mineral species names to match the database
+        #used in Toughreact
         init_minerals_hydrat = self.list_material[0].convert_hydrat_thermoddem(compo_hydrat)
     
     def calcul_seawater(self, temperature):
-        '''Calcul de la composition ionique de l'eau de mer en fonction de la température.
-        Ce calcul se base sur une composition ionique à 20°C dans l'océan atlantique'''
+        '''Calculates the ionic composition of seawater as a function of temperature.
+        This calculation is based on an ionic composition at 20°C in the Atlantic Ocean'''
         pass
 
     def _initialize_solve(self, echeance, time_output): 
-        '''Calcul initial à partir des conditions initiales et conditions limites.
-        Renvoie un (ou plusieurs) fichier de résultat pouvant être repris comme
-        conditions initiales d'un nouveau calcul'''
+        '''Initial calculation from initial conditions and boundary conditions.
+        Returns one (or more) result file(s) that can be used as
+        initial conditions for a new calculation'''
         self._init_file()        
         self._initialize_PyTOUGH()
         
         dict_minerals_database = toughreact.lecture_database(self.database)
         
         ###############################################################################
-        #Calcul d'equilibre des phases minérales issues du calcul d'hydratation
-        #pour obtenir la concentration des espèces ioniques dans la solution, 
-        #à la température souhaitée
+        #Equilibrium calculation of mineral phases from the hydration calculation
+        #to obtain the concentration of ionic species in solution,
+        #at the desired temperature
         if self.list_material[0].minerals:
             #On enlève les espèces solides suivantes :
             list_minerals_del = [#'ANHYDRITE','CHRYSOTILE','GIBBSITE',
@@ -460,11 +460,11 @@ class Model:
             tmp_no_del_species = []
             for elem in self.list_material[0].minerals.keys():
                 convert_mineral = mineral_database[self.database][elem].upper()
-                if elem.upper() in list_minerals_del:#liste des minéraux et des ions (par comparaison aux ions des minéraux restants) à enlever
+                if elem.upper() in list_minerals_del:#list of minerals and ions (by comparison with ions from remaining minerals) to remove
                     tmp_del_minerals.append(elem)
-                    tmp_del_species += list(dict_minerals_database[convert_mineral]['reaction'])#liste des ions contenus dans les minéraux à enlever
+                    tmp_del_species += list(dict_minerals_database[convert_mineral]['reaction'])#list of ions contained in the minerals to remove
                 else:
-                    tmp_no_del_species += list(dict_minerals_database[convert_mineral]['reaction'])#liste des ions contenus dans les minéraux à garder
+                    tmp_no_del_species += list(dict_minerals_database[convert_mineral]['reaction'])#list of ions contained in the minerals to keep
                 if convert_mineral.upper() in dict_minerals_database:
                     material_species += list(dict_minerals_database[convert_mineral]['reaction'])
             
@@ -478,14 +478,14 @@ class Model:
             # list_species_del.remove('K+')
             # for elem in list(set(material_species)):
             #     self.list_material[0].species[elem] = 0.0
-            #On enlève des minéraux et des ions
+            #Removing minerals and ions
             for elem in tmp_del_minerals:
                 del self.list_material[0].minerals[elem]
             #     if elem.upper() in dict_minerals_database:
             #         tmp_species += list(dict_minerals_database[elem]['reaction'])
             # tmp_species = list(set(material_species))
             # tmp_species += ['H+', 'H2O']
-            #On enlève les éléments suivants
+            #Removing the following elements
             list_species_del += []#'FE+3'
             # tmp_species = []
             # for elem in self.list_material[0].species.keys():
@@ -532,7 +532,7 @@ class Model:
         else:
             init_species_inter, init_minerals = self.list_material[0].hydration_equilibrium()
         
-        #Récupération des informations sur les hauteurs de marée et la température de l'eau
+        #Retrieving tidal height and water temperature information
         list_BC_struct_maree = [[],[]]
         for location in self.BC_struct:
             if (self.BC_struct[location] and self.BC_struct[location].type_cond != 'infini'):
@@ -540,9 +540,9 @@ class Model:
                     h = int(round(self.BC_struct[location].hauteur_maree[0] * \
                     self.mesh.num_elem['Z']/(self.mesh.hauteur),0))
                     #self.mesh.num_elem['Z']/(self.mesh.dims['Z']),0))
-                    #Liste des block immergés
+                    #List of submerged blocks
                     list_BC_struct_maree[0] += self.list_blk_bc[location][-h:]#[:]#
-                    #liste des block émergés
+                    #List of emerged blocks
                     list_BC_struct_maree[1] += self.list_blk_bc[location][:-h]#[]#
                     temperature_eau = float(self.BC_struct[location].temperature_eau[0])
                     #self.BC_struct[location].seawater_species = toughreact.calcul_equilibre_bnd_solution(temperature_eau,len(init_species_inter))
@@ -589,7 +589,7 @@ class Model:
         #list_blk_limit = [blk for blk in self.dat.grid.blocklist if blk.rocktype == self.atmos]
         
         ###############################################################################
-        #Ecriture du fichier flow.inp pour le calcul avec Toughreact
+        #Writing the flow.inp file for the Toughreact calculation
         self.dat.parameter['tstop'] = echeance
         self.dat.output_times = {'num_times_specified':len(time_output),'time':time_output}
         #self.dat.incon[str(blk)] = [None, self.input_BC_maree(self.eos,BC.P_atm[0],BC.temperature_eau[0])]
@@ -625,32 +625,31 @@ class Model:
         self.nb_mineraux = len(self.minerals)
         
     def _delete_ic(self):
-        '''Suppression des conditions initiales dans les fichiers flow et solute
-        afin de poursuivre un calcul précédemment effectués (restart).'''
-        #######################Pour la partie flow        
-        #Suppression des valeurs par défaut pour les conditions initiales et aux
-        #limites
+        '''Removes initial conditions from the flow and solute files
+        in order to continue a previously performed calculation (restart).'''
+        #######################For the flow part
+        #Removal of default values for initial and boundary conditions
         self.dat.parameter['default_incons'] = None
         self.dat.incon = {}
     
     def ClausiusClapeyron(self,temperature):
-        '''Function permettant de calculer la pression de vapeur saturante en fonction de la température'''
-        #pression de référence
+        '''Function to calculate the saturating vapour pressure as a function of temperature'''
+        #reference pressure
         p0 = 1.01e5#Pascal
-        #température de référence
+        #reference temperature
         T0 = 373#Kelvin
-        #constante universelle des gaz parfait
+        #universal ideal gas constant
         R = 8.314#J/mol K
-        #chaleur latente d'évaporation
+        #latent heat of vaporisation
         Hvap = 40.7e3#J/mol
         return p0*math.exp(-Hvap/R*(1/temperature - 1/T0))
     
     def Flux_evaporation(self,temperature, humidite_relative):
-        '''Calcul du flux d'évaporation en fonction de la différence de pression de vapeur entre l'atmospère et le liquide'''
-        ######flux d'évaporation
-        #vitesse du vent
+        '''Calculates the evaporation flux as a function of the vapour pressure difference between the atmosphere and the liquid'''
+        ######evaporation flux
+        #wind speed
         V = 0#m/s
-        #coefficient d'évaporation de l'eau
+        #water evaporation coefficient
         E = 2.188e-8+1.859e-8*V#kg.m2/s/Pa
         return E *self.ClausiusClapeyron(temperature)*(1-humidite_relative/100)
 
@@ -669,7 +668,7 @@ class Model:
 
     def input_BC_maree(self, eos, P_atm, temperature_eau):
         #############################
-        #ATTENTION Il faut dissocier IC de BC (on ne parle pas des mêmes températures et HR)
+        #WARNING IC and BC must be distinguished (temperatures and RH are not the same)
         #############################
         result = {}
         result['eos3'] = [P_atm, 10.01, temperature_eau]#[P_atm, 0.99, temperature_eau]
@@ -680,7 +679,7 @@ class Model:
         return result[eos]
 
     def _update_bc(self, i, time_input, time_output):
-        '''Modifie les conditions limites dans les fichiers flow et solute'''
+        '''Modifies the boundary conditions in the flow and solute files'''
         self.dat.clear_generators()
         self.dat.incon = {}
         inc=t2incons.t2incon("SAVE")
@@ -724,8 +723,8 @@ class Model:
             open("flow.inp","w").write(result)
 
     def _update_bc_maree(self, location, incr, inc):
-        #########Calcul des éléments immergés
-        #hauteur discrétisé en-dessous de laquelle les éléments sont immergés
+        #########Calculation of submerged elements
+        #discretised height below which elements are submerged
         BC = self.BC_struct[location]
         
         BC.bnd_solution[incr]['temperature'] = BC.temperature_eau[incr]
@@ -743,7 +742,7 @@ class Model:
         
         for elem in self.list_blk_bc[location][self.pip:]:#list_blk_moul:
             #print "mouillage..."
-            #Actualisation de la partie transfert d'humidité (flow.inp et INCON
+            #Updating the moisture transfer part (flow.inp and INCON
             self.dat.grid.block[elem.name].rocktype = self.water
             inc[str(elem)] = self.input_BC_maree(self.eos, BC.P_atm[incr], BC.temperature_eau[incr])
             print("Données d'entrée des conditions limites : ", inc)
@@ -773,7 +772,7 @@ class Model:
         self.correction_boundary_solution(location,bnd_species['composition'])#BC.bnd_solution[incr])
             
         for elem in self.list_blk_bc[location][:self.pip]:#list_blk_sech:
-            #print "séchage..."
+            #print "drying..."
             #print elem.name
             self.dat.grid.block[elem.name].rocktype = self.atmos
             inc[str(elem)] = self.input_BC(self.eos, BC.temperature_ext[incr], BC.humidite_relative_ext[incr], BC.P_atm[incr])
@@ -784,10 +783,10 @@ class Model:
 #             gen=t2data.t2generator(name='INF'+layer.name,block=blockname,type='COM1',gx=self.Flux_evaporation((BC.temperature_ext[incr]+273), BC.humidite_relative_ext[incr]))
 #             self.dat.add_generator(gen)
         
-        #Liste des block immergés
+        #List of submerged blocks
         list_BC_struct_maree = [[],[]]
         list_BC_struct_maree[0] += self.list_blk_bc[location][self.pip:]
-        #liste des block émergés
+        #List of emerged blocks
         list_BC_struct_maree[1] += self.list_blk_bc[location][:self.pip]
 
         return inc
@@ -860,10 +859,10 @@ class Model:
         savechem.write_savechem('inchem')
 
     def _initialize_restart(self):
-        '''Transforme les fichiers de résultat d'un premier calcul en conditions
-        initiales d'un second'''
-        # Les resultats du calcul precedent servent de CI au calcul suivant
-        # Reecriture des conditions initiales dans INCON et inchem
+        '''Transforms the result files from a first calculation into initial
+        conditions for a second one'''
+        # The results of the previous calculation serve as IC for the next calculation
+        # Rewriting initial conditions in INCON and inchem
         if os.path.isfile("inchem"):
             os.remove("inchem")
         #os.rename("savechem","inchem")
@@ -878,7 +877,7 @@ class Model:
             self.exe = toughreact_exe
         else:
             self.exe = './'+toughreact_exe
-        #Test sur la présence des CI, CL, mesh, méthode de résolution...
+        #Check for the presence of IC, BC, mesh, solution method...
         #self.duree = duree
         #duree_sec = self.duree * 3600. * 24.
         self._initialize_solve(chargement_marnage[0][0], time_output[0])
@@ -886,7 +885,7 @@ class Model:
         t = chargement_marnage[0][0]#pas
         self._sauvegarde(t/3600.0/24.0, toughreact_exe, time_output[0])
         i = 1
-        self.frequence_sauv = frequence #fréquence de sauvegarde (en heures)
+        self.frequence_sauv = frequence #save frequency (in hours)
         print("Calcul en cours...")
         #while t <= duree_sec:
         if len(chargement_marnage[0]) > 1:
@@ -966,7 +965,7 @@ if __name__ == '__main__':
     #m.geo.write_vtk('titi.vtk')
     
     ###########################################################################
-    #Données d'entrée matériau
+    #Material input data
     compo_ciment = {}
     #compo_ciment={"C3S":67.8/100.,"C2S":16.6/100.,"C3A":4./100.,
     #"C4AF":7.2/100.,"CSbH2":2.8/100.}
@@ -986,7 +985,7 @@ if __name__ == '__main__':
                  formulation[nom_beton]["g0/5"] +\
                  formulation[nom_beton]["s0/4"] +\
                  formulation[nom_beton]["c"]
-    temperature = 25. #température du matériau en degré celsius
+    temperature = 25. #material temperature in degrees Celsius
     age_cure = 200. #en jours
     mesures_ref = {'permeabilite':4.00e-20,'porosite':0.122}
     krl_model = {'type':'genuchten','params':[4.396e-01,0.0,1.0,0.01]}
@@ -1009,19 +1008,19 @@ if __name__ == '__main__':
     #dir_dbase = '/Users/anthonysoive/Documents/CR_Nantes_2014_11/02-Modelisation/durabilite_marnage/model/'
     #dbase = dir_dbase+database_phreeqc
     ###########################################################################
-    ###########################Conditions initiales##########################    
-    ######Création des conditions initiales
+    ###########################Initial conditions##########################
+    ######Creation of initial conditions
     toughreact_concrete.model.add_ic()
     ###########################################################################
     
-    ###########################Conditions aux limites##########################    
-    ######Création des conditions limites
+    ###########################Boundary conditions##########################
+    ######Creation of boundary conditions
     nb_jours = 1./6.
     hauteur_marnage = maree.lecture_maree(nb_jours)#[5,5]#,10]#nb_jours*2*12*[10]#[0,0,0,0,0,0,10,10,10,10,10,10] #nb_jours*2*[0,0,0,0,0,0,10,10,10,10,10,10] #
-    humidite_relative_ext = [65] #humidité relative extérieure
-    temperature_ext = [25] #température extérieure
-    temperature_eau = [15] #température de l'eau
-    P_atm = [1.013e5] #pression atmosphérique
+    humidite_relative_ext = [65] #external relative humidity
+    temperature_ext = [25] #external temperature
+    temperature_eau = [15] #water temperature
+    P_atm = [1.013e5] #atmospheric pressure
 #    seawater_species = {'H2O':1.0,'H+':6.31e-9,'Cl-':5.350e-1,'Ca++':9.980e-3,\
 #    'SO4--':2.760e-2,'H4SiO4(aq)':1.0e-20,'K+':0.972e-2,'Mg++':0.5222e-01,\
 #    'Na+':0.459,'Al+++':1.0e-20,'O2(aq)':1.0e-10,'Fe++':1.0e-10,'HCO3-':1.0e-10}
@@ -1039,8 +1038,8 @@ if __name__ == '__main__':
     ###########################################################################
     
     ###########################################################################
-    #résolution du problème
-    #fréquence de sauvegarde
+    #problem resolution
+    #save frequency
     frequence = 6
     toughreact_exe = pre.initialize(rep_outil, rep_travail, eos, toughreact_concrete.model.database,
                                     toughreact_concrete.model.database_phreeqc)

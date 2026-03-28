@@ -151,7 +151,7 @@ def run_simulation(
     materiau.indicateurs_deduits = indicateurs_deduits[nom_beton]
     materiau.database = database
     materiau.hydratation(temps_cure)
-    print("Minéraux :", materiau.minerals)
+    print("Minerals:", materiau.minerals)
 
     # ── Tidal boundary condition ──────────────────────────────────────────────
     chargement_marnage = [[temps_exposure], [hauteur_maree]]

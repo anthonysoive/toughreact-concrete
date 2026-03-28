@@ -15,7 +15,7 @@ else:
 
 
     
-# les différentes espèces, avec leur masse volumique
+# the different species, with their mass density
 
 z={}
 z["Ca2+"]=2.
@@ -29,23 +29,23 @@ z["SO_42-"]=1.
 
 
 def getHamacker(rho):
-    # modèle de Flatt 2004 pour des particules dans l'eau
-    #retourne la constante de Hamacker en Joule
+    # Flatt 2004 model for particles in water
+    #returns the Hamaker constant in Joules
     h=0.3413*1e-20*(rho-1)*(rho-1)
     return h
 
 def DebyeLength(I,T):
-    # retourne la longeur de Debye k^-1, en metre
-    # I : charge ionique, mol(e-)/m3
-    # T temperature, en celcius
+    # returns the Debye length k^-1, in metres
+    # I : ionic charge, mol(e-)/m3
+    # T temperature, in Celsius
     
     Tk=T+273.
     kb=1.38064852e-23 #J.K^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     Na= 6.022140857e23 #mol^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
-    
+    eps_reau=78.5 # relative permittivity
+
     return np.sqrt(kb*Tk*eps0*eps_reau/(2*q*q*Na*I))
 
 
@@ -70,10 +70,10 @@ def IonicStength(concentrations):
 
 def activity(II,species,T):
     '''
-    retourne le gamma _i"
-    
+    returns gamma_i"
+
     concentration mol/m3
-    II en mol/m3
+    II in mol/m3
     '''
     
     radius={"Nap":4e-10, "Kp":3.5e-10, "Hp":9.0e-10, "OHm":3.5e-10,"Capp":5e-10,"SO4mm":5e-10,"Clm":3.5e-10}
@@ -88,11 +88,11 @@ def activity(II,species,T):
     #Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
-    # calcul de la longueur de Debye
+    eps_reau=78.5 # relative permittivity
+    # compute Debye length
     kdb=1./DebyeLength(II,T)
     #print "Debye length, m "+str(1./kdb)
-    # calcul des activités
+    # compute activities
     #extended debye huckel...
     denom=8*np.pi*eps_reau*eps0*kb*Tk
         
@@ -100,11 +100,11 @@ def activity(II,species,T):
         
 
 def BrouwersEijk(mNasc,mKsc, phi, alpha,esc,sfsc, fillsc,T,gypsum,P=0.1,cClm=0.,cNap_add=0.):
-    # mNasc : masse de Na dans le ciment
-    # mKsc : masse de K dans le ciment
-    #phi : porosité pleine d'eau
-    # esc : rapprot esc
-    # sfsc : fumee de silice, cendre volante, filler...
+    # mNasc : mass of Na in cement
+    # mKsc : mass of K in cement
+    #phi : water-filled porosity
+    # esc : w/c ratio
+    # sfsc : silica fume, fly ash, filler...
     #T : temperature
     #gypsum : boolean : is there some gypsum ?
     
@@ -115,7 +115,7 @@ def BrouwersEijk(mNasc,mKsc, phi, alpha,esc,sfsc, fillsc,T,gypsum,P=0.1,cClm=0.,
     Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     
     #concetration en Na+ en mol/L
     cNap=(0.35+0.65*alpha)*(1-0.3/esc*alpha)*mNasc/(22.9898*phi*(esc/1000.+1./3150.+sfsc/2200.+fillsc/2650.))+cNap_add
@@ -125,12 +125,12 @@ def BrouwersEijk(mNasc,mKsc, phi, alpha,esc,sfsc, fillsc,T,gypsum,P=0.1,cClm=0.,
     cKp=(0.70+0.30*alpha)*(1-0.27/esc*alpha)*mKsc/(39.0983*phi*(esc/1000.+1./3150.+sfsc/2200.+fillsc/2650.))
     print("K+ concentration, mol/L "+str(cKp))
     II=3. #ionic strength, mol/m3
-    # un algorithme de point fixe pour résoudre les concentrations
+    # a fixed-point algorithm to solve concentrations
     for i in range (20):
-        # calcul de la longueur de Debye
+        # compute Debye length
         kdb=1./DebyeLength(II,T)
         #print "Debye length, m "+str(1./kdb)
-        # calcul des activités
+        # compute activities
         #extended debye huckel...
         denom=8*np.pi*eps_reau*eps0*kb*Tk
         '''
@@ -152,7 +152,7 @@ def BrouwersEijk(mNasc,mKsc, phi, alpha,esc,sfsc, fillsc,T,gypsum,P=0.1,cClm=0.,
         
         #print gNap,gKp,gHp,gOHm, gCapp,gSO4mm
         #calcul de la concentration en OHm
-        # prise en compte de la temperature par l'équation de van hoff, voir  https://pdfs.semanticscholar.org/5d2a/7f201623c9d69d715a9117f0a6c363d5d20b.pdf
+        # accounting for temperature via the van Hoff equation, see  https://pdfs.semanticscholar.org/5d2a/7f201623c9d69d715a9117f0a6c363d5d20b.pdf
         #Kgyps=np.power(10,-4.58+(-17880./8.314*(1./298.-1./(Tk))))#*np.power(10,0.4)   #l'indice de saturation en gypse peut faire changer de signe le potentiel des sio2 !
         Kgyps=np.power(10,getlogK("gypsum",Tk,P))
         if gypsum ==False:
@@ -186,7 +186,7 @@ def BrouwersEijk(mNasc,mKsc, phi, alpha,esc,sfsc, fillsc,T,gypsum,P=0.1,cClm=0.,
         #print "SO_42- concentration, mol/L "+str(cSO4mm)
         #print "charge",2*cCapp+cHp+cKp+cNap-cClm-cOHm-2*cSO4mm
         
-        #mise à jour de la charge ionique, en mol/m3
+        #update ionic charge, in mol/m3
         II=1e3*0.5*(4*cCapp+4*cSO4mm+cHp+cOHm+cNap+cKp+cClm)
         
     gHp=activity(II,"Hp",T)
@@ -212,12 +212,12 @@ def saturationIndex(poresolution,T,P=0.1):
     Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     
-    # calcul des activités
+    # compute activities
     kdb=1./DebyeLength(II,T)
         #print "Debye length, m "+str(1./kdb)
-        # calcul des activités
+        # compute activities
     denom=8*np.pi*eps_reau*eps0*kb*Tk
     
     
@@ -249,7 +249,7 @@ def conductivity(poresolution):
     for i in poresolution.keys():
         if i in zlambda0.keys():
             cond+=zlambda0[i]*poresolution[i]/(1.+np.sqrt(poresolution["I"]*0.001)*G[i])
-    poresolution["sigma"]=cond*0.1  #en Siemens/mètre si concentration en mol/L   
+    poresolution["sigma"]=cond*0.1  #in Siemens/metre if concentration in mol/L
     return poresolution
 
 def fout(phi,grad):
@@ -257,7 +257,7 @@ def fout(phi,grad):
     return phi[0]*phi[0]
 
 def ViallisTerrisse(poresolution,T):
-    #dans le dictionnaire poresolution, les concentrations et la force ionique sont en mol/L.
+    #in the poresolution dictionary, concentrations and ionic strength are in mol/L.
     
     #T=25.
 
@@ -266,37 +266,37 @@ def ViallisTerrisse(poresolution,T):
     Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     
     kdb=poresolution["kdb"]
     II=poresolution["I"]
-    #calcul de l'activité des différents ions, en mol/L
+    #compute activity of different ions, in mol/L
     denom=8*np.pi*eps_reau*eps0*kb*Tk
     aHp=poresolution["cHp"]*activity(II,"Hp",T)
     #aOHm=poresolution["cOHm"]*np.exp(-(q*q/denom)*kdb/(1.+kdb*9e-10))
-    
+
     aNap=poresolution["cNap"]*activity(II,"Nap",T)
     aKp=poresolution["cKp"]*activity(II,"Kp",T)
     aCapp=poresolution["cCapp"]*activity(II,"Capp",T)
-    
+
     phi0=0.0001
     def f(phi,grad):
-                #calcul de nSiOH a l'aide du nombre de site.
+                #compute nSiOH using the number of sites.
         fact=np.exp(phi[0]*q/(kb*Tk))
-        #nombre de site disponible par metre carré
+        #number of available sites per square metre
         ns=2./41.*1e20
         K1=np.power(10,-12.3)
         K2=np.power(10,-9.4)
         K3=np.power(10,-12.1)
         nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
         nSiOm=nSiOH*K1*fact/(aHp)
         nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
         nSiONa=nSiOH*K3*(aNap)/aHp
         nSiOK=nSiOH*K3*(aKp)/aHp
         
-        #calcul du potentiel par la charge
+        #compute potential from charge
         sigma=q*(nSiOCap-nSiOm)
         phir=sigma/(eps0*eps_reau*kdb)
         return (phi[0]-phir)*(phi[0]-phir)
@@ -315,51 +315,51 @@ def ViallisTerrisse(poresolution,T):
     '''
     for i in range(20):
         
-        #calcul de nSiOH a l'aide du nombre de site.
+        #compute nSiOH using the number of sites.
         fact=np.exp(phi0*q/(kb*Tk))
-        #nombre de site disponible par metre carré
+        #number of available sites per square metre
         ns=2./41.*1e20
         K1=np.power(10,-12.3)
         K2=np.power(10,-9.4)
         K3=np.power(10,-12.1)
         nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
         nSiOm=nSiOH*K1*fact/(aHp)
         nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
         nSiONa=nSiOH*K3*(aNap)/aHp
         nSiOK=nSiOH*K3*(aKp)/aHp
         
-        #calcul du potentiel par la charge
+        #compute potential from charge
         sigma=q*(nSiOCap-nSiOm)
         phi0=sigma/(eps0*eps_reau*kdb)
         print phi0
     '''
     
     fact=np.exp(phi0*q/(kb*Tk))
-    #nombre de site disponible par metre carré
+    #number of available sites per square metre
     ns=2./41.*1e20
     K1=np.power(10,-12.3)
     K2=np.power(10,-9.4)
     K3=np.power(10,-12.1)
     nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
-    #calcul des different complexes
+    #compute the different complexes
         
     nSiOm=nSiOH*K1*fact/(aHp)
     nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
     nSiONa=nSiOH*K3*(aNap)/aHp
     nSiOK=nSiOH*K3*(aKp)/aHp
     
-    nbCa2p=nSiOCap*(4*3.14*2.1*2.1)*1e-18   #nombre d'atome de calcium à la surface
-    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.52*1e6* 5/ 730.958*6.022e23 #nombre d'atome dans le volume 1e6 : 
-    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.604*1e6* 0.366/40.08 *6.022e23 #nombre d'atome dans le volume 1e6 : 
+    nbCa2p=nSiOCap*(4*3.14*2.1*2.1)*1e-18   #number of calcium atoms at the surface
+    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.52*1e6* 5/ 730.958*6.022e23 #number of atoms in the volume 1e6 :
+    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.604*1e6* 0.366/40.08 *6.022e23 #number of atoms in the volume 1e6 :
     print("calcium adsorbed/calcium volume %f",nbCa2p/nbCa2p_vol)
     
     
     return phi0
 
 def ViallisTerrisseCl(poresolution,T):
-    #dans le dictionnaire poresolution, les concentrations et la force ionique sont en mol/L.
+    #in the poresolution dictionary, concentrations and ionic strength are in mol/L.
     
     #T=25.
 
@@ -368,11 +368,11 @@ def ViallisTerrisseCl(poresolution,T):
     Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     
     kdb=poresolution["kdb"]
     II=poresolution["I"]
-    #calcul de l'activité des différents ions, en mol/L
+    #compute activity of different ions, in mol/L
     denom=8*np.pi*eps_reau*eps0*kb*Tk
     aHp=poresolution["cHp"]*activity(II,"Hp",T)
     #aOHm=poresolution["cOHm"]*np.exp(-(q*q/denom)*kdb/(1.+kdb*9e-10))
@@ -383,9 +383,9 @@ def ViallisTerrisseCl(poresolution,T):
     aClm=poresolution["cClm"]*activity(II,"Clm",T)
     phi0=0.0001
     def f(phi,grad):
-                #calcul de nSiOH a l'aide du nombre de site.
+                #compute nSiOH using the number of sites.
         fact=np.exp(phi[0]*q/(kb*Tk))
-        #nombre de site disponible par metre carré
+        #number of available sites per square metre
         ns=2./41.*1e20
         K1=np.power(10,-12.3)
         K2=np.power(10,-9.4)
@@ -393,7 +393,7 @@ def ViallisTerrisseCl(poresolution,T):
         K4=np.power(10,-0.35)
         K5=np.power(10,-9.8)
         nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp+K4*aClm*fact+K5*aCapp*aClm/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
         nSiOm=nSiOH*K1*fact/(aHp)
         nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
@@ -402,7 +402,7 @@ def ViallisTerrisseCl(poresolution,T):
         nSiOHClm=nSiOH*K4*aClm*fact
         nSiOCaCl=nSiOH*K5*aCapp*aClm/aHp
         
-        #calcul du potentiel par la charge
+        #compute potential from charge
         sigma=q*(nSiOCap-nSiOm-nSiOHClm)
         phir=sigma/(eps0*eps_reau*kdb)
         return (phi[0]-phir)*(phi[0]-phir)
@@ -421,29 +421,29 @@ def ViallisTerrisseCl(poresolution,T):
     '''
     for i in range(20):
         
-        #calcul de nSiOH a l'aide du nombre de site.
+        #compute nSiOH using the number of sites.
         fact=np.exp(phi0*q/(kb*Tk))
-        #nombre de site disponible par metre carré
+        #number of available sites per square metre
         ns=2./41.*1e20
         K1=np.power(10,-12.3)
         K2=np.power(10,-9.4)
         K3=np.power(10,-12.1)
         nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
         nSiOm=nSiOH*K1*fact/(aHp)
         nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
         nSiONa=nSiOH*K3*(aNap)/aHp
         nSiOK=nSiOH*K3*(aKp)/aHp
         
-        #calcul du potentiel par la charge
+        #compute potential from charge
         sigma=q*(nSiOCap-nSiOm)
         phi0=sigma/(eps0*eps_reau*kdb)
         print phi0
     '''
     
     fact=np.exp(phi0*q/(kb*Tk))
-    #nombre de site disponible par metre carré
+    #number of available sites per square metre
     ns=2./41.*1e20
     K1=np.power(10,-12.3)
     K2=np.power(10,-9.4)
@@ -451,7 +451,7 @@ def ViallisTerrisseCl(poresolution,T):
     K4=np.power(10,-0.35)
     K5=np.power(10,-9.8)
     nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp+K4*aClm*fact+K5*aCapp*aClm/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
     nSiOm=nSiOH*K1*fact/(aHp)
     nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
@@ -460,9 +460,9 @@ def ViallisTerrisseCl(poresolution,T):
     nSiOHClm=nSiOH*K4*aClm*fact
     nSiOCaCl=nSiOH*K5*aCapp*aClm/aHp
     '''
-    nbCa2p=nSiOCap*(4*3.14*2.1*2.1)*1e-18   #nombre d'atome de calcium à la surface
-    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.52*1e6* 5/ 730.958*6.022e23 #nombre d'atome dans le volume 1e6 : 
-    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.604*1e6* 0.366/40.08 *6.022e23 #nombre d'atome dans le volume 1e6 : 
+    nbCa2p=nSiOCap*(4*3.14*2.1*2.1)*1e-18   #number of calcium atoms at the surface
+    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.52*1e6* 5/ 730.958*6.022e23 #number of atoms in the volume 1e6 :
+    nbCa2p_vol= 4*3.14/3.*(2.1*2.1*2.1)*1e-27*2.604*1e6* 0.366/40.08 *6.022e23 #number of atoms in the volume 1e6 :
     print "calcium adsorbed/calcium volume) ",nbCa2p/nbCa2p_vol
     '''
     
@@ -473,7 +473,7 @@ def ViallisTerrisseCl(poresolution,T):
     return phi0, nSiOHClm,nSiOCaCl
 
 def Milonjic(poresolution,T):
-    #dans le dictionnaire poresolution, les concentrations et la force ionique sont en mol/L.
+    #in the poresolution dictionary, concentrations and ionic strength are in mol/L.
     
     #T=25.
 
@@ -482,11 +482,11 @@ def Milonjic(poresolution,T):
     Na= 6.022140857e23 #mol^-1
     q=1.602e-19 # coulomb, A.s  ou  J.V^-1
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     
     kdb=poresolution["kdb"]
     II=poresolution["I"]
-    #calcul de l'activité des différents ions, en mol/L
+    #compute activity of different ions, in mol/L
     denom=8*np.pi*eps_reau*eps0*kb*Tk
     aHp=poresolution["cHp"]*activity(II,"Hp",T)
     #aOHm=poresolution["cOHm"]*np.exp(-(q*q/denom)*kdb/(1.+kdb*9e-10))
@@ -497,9 +497,9 @@ def Milonjic(poresolution,T):
      
     phi0=0.0001
     def f(phi,grad):
-                #calcul de nSiOH a l'aide du nombre de site.
+                #compute nSiOH using the number of sites.
         fact=np.exp(phi[0]*q/(kb*Tk))
-        #nombre de site disponible par metre carré
+        #number of available sites per square metre
         ns=7.85e18
         K1=np.power(10,-8.2)
         K2=np.power(10,-5.6)
@@ -509,14 +509,14 @@ def Milonjic(poresolution,T):
         K2=np.power(10,-4.3)
         K3=np.power(10,-6.7)
         nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
-        #calcul des different complexes
+        #compute the different complexes
         
         nSiOm=nSiOH*K1*fact/(aHp)
         nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
         nSiONa=nSiOH*K3*(aNap)/aHp
         nSiOK=nSiOH*K3*(aKp)/aHp
         
-        #calcul du potentiel par la charge
+        #compute potential from charge
         sigma=q*(nSiOCap-nSiOm)
         phir=sigma/(eps0*eps_reau*kdb)
         return (phi[0]-phir)*(phi[0]-phir)
@@ -533,7 +533,7 @@ def Milonjic(poresolution,T):
     #print "minimum value = ", minf
     
     fact=np.exp(phi0*q/(kb*Tk))
-    #nombre de site disponible par metre carré
+    #number of available sites per square metre
     ns=7.85e18
     K1=np.power(10,-8.2)
     K2=np.power(10,-5.6)
@@ -541,14 +541,14 @@ def Milonjic(poresolution,T):
     nSiOH=ns/(1.+K1*fact/(aHp)+K2*aCapp/(aHp*fact)+K3*(aNap+aKp)/aHp)
     nSiOCap=nSiOH*K2*aCapp/(aHp*fact)
     
-    # controle avec Adsorption on silica surface eugène papirer, persello p310
+    # cross-check with Adsorption on silica surface, eugène papirer, persello p310
     #print "number of adsorbed calcium"+str(nSiOCap*1e-18)
     
     return phi0
 
 def vanDerWallsEnergy(H,delta,R1,R2):
-        # H en Joule, distances en metres
-        #retour en Joule
+        # H in Joules, distances in metres
+        #return in Joules
         denom=delta*delta+2*delta*(R1+R2)
         top=4*R1*R2
         return -H/12.*(top/denom+top/(denom+top)+2*np.log(denom/(denom+top)))
@@ -559,7 +559,7 @@ def electrostaticEnergy(kdb,delta,R1,R2,phi1,phi2):
     #phi1 phi2 en volt
     #return en Joule
     eps0=8.85418782e-12 # A^2.s^4.kg^-1.m^-3
-    eps_reau=78.5 # permitivité relative
+    eps_reau=78.5 # relative permittivity
     front=np.pi*eps0*eps_reau*R1*R2/(R1+R2)
     return front*((phi1*phi1+phi2*phi2)*np.log(1-np.exp(-2.*kdb*delta))+2*phi1*phi2*np.log((1+np.exp(-kdb*delta))/(1-np.exp(-kdb*delta))))
 
@@ -571,13 +571,13 @@ def geti_alpham(alpham,res):
     return i
 
 '''
-Estimation de la viscosité dynamique
+Estimation of dynamic viscosity
 '''
 def dynamicvisco(poresolution):
-    #on retourne la viscosité dynamique
+    #returns dynamic viscosity
     
     eta=1.0
-    #conductivité ionic molaire: S.cm2.mol-1
+    #molar ionic conductivity: S.cm2.mol-1
     lambda0={"cNap":50.1, "cKp":73.5, "cHp":349.6, "cOHm":199.1,"cCapp":119.,"cSO4mm":160.} #cm2 S/mol
     zi={"cNap":1., "cKp":1., "cHp":1., "cOHm":1.,"cCapp":2.,"cSO4mm":2.} #cm2 S/mol
     
@@ -603,7 +603,7 @@ def dynamicvisco(poresolution):
     for i in lambda0.keys():
         r[i]=1-zi[i]/lambda0[i]/zsl
     
-    # les binomiaux (1/2  p) font référence aux coefficients du DL de \sqrt{1+x}  
+    # the binomials (1/2  p) refer to the Taylor series coefficients of \sqrt{1+x}
     nbit=6 
     c=np.zeros(nbit)
     binom=np.zeros(nbit)
@@ -677,7 +677,7 @@ def dynamicvisco(poresolution):
     #print eta
     eta=eta*0.36454*np.sqrt(2*II/(epsilonr*T))+ etaw
     
-    # les coefficients B, voir Jenkins 1995
+    # the B coefficients, see Jenkins 1995
     eta+=poresolution["cCapp"]*0.284*etaw
     eta+=poresolution["cHp"]*0.068*etaw
     eta+=poresolution["cOHm"]*0.122*etaw
@@ -691,7 +691,7 @@ if __name__ == '__main__':
     
     saturationIndex({"cOHm":0.160,"cHp":0,"cCapp":0.023, "cSO4mm":0.123, "cKp":0.365,"cNap":0.023},T=20.)
     
-    # appel au modèle d'hydratation
+    # call to the hydration model
     #c11={'C3S':60.7,'C2S':18.7, 'C3A':2.8, 'C4AF':12.2,'CSb':3.0,'CCb':3.0}
    
     #c11={'C3S':61.,'C2S':18., 'C3A':3.9, 'C4AF':5.8,'CSb':2,'CCb':3.7}
@@ -738,7 +738,7 @@ if __name__ == '__main__':
     
     
     for alpham in [0.01,0.02,0.03,0.04,0.05,0.06,0.08,0.1,0.15,0.2,0.25,0.5,0.6]:
-        # on trouve le temps qui correspond au degree d'hydratation massique
+        # find the time corresponding to the mass hydration degree
         j=geti_alpham(alpham,res)
         
         
@@ -759,7 +759,7 @@ if __name__ == '__main__':
         #mNasc=2*22.9898/(61.97894)*0.0005
         #mKsc=2*39.0983/(94.196)*0.002
         
-        phi=res[j]['compo']['H']*v['H']+0.36*(res[j]['compo']['CSH']*v['CSH']+res[j]['compo']['CSHp']*v['CSHp'])# volume de la porosité totale en eau
+        phi=res[j]['compo']['H']*v['H']+0.36*(res[j]['compo']['CSH']*v['CSH']+res[j]['compo']['CSHp']*v['CSHp'])# total porosity volume in water
         print("porosity %f",phi)
         #alpha=0.05
         sfsc=0
@@ -783,7 +783,7 @@ if __name__ == '__main__':
         print("potential, SiO2, V %f",phis)
         
         
-        # affichage du potentiel entre deux particules de CSH
+        # plot potential between two CSH particles
         #R=4.2e-9
         R=2.1e-9
         hamacker=getHamacker(2.604)
@@ -792,8 +792,8 @@ if __name__ == '__main__':
         for i in range(len(distl)):
             wCSH=vanDerWallsEnergy(hamacker,distl[i],R,R)+electrostaticEnergy(poresolution['kdb'],distl[i],R,R,phi0,phi0)
             wCSHl.append(wCSH)
-        
-        # affichage du potentiel entre deux particules de fumée de silice
+
+        # plot potential between two silica fume particles
         R=7e-8
         #R=5e-9
         hamacker=getHamacker(2.2)
@@ -802,8 +802,8 @@ if __name__ == '__main__':
         for i in range(len(distl)):
             wSiO2=vanDerWallsEnergy(hamacker,distl[i],R,R)+electrostaticEnergy(poresolution['kdb'],distl[i],R,R,phis,phis)
             wSiO2l.append(wSiO2)
-        
-        # affichage du potentiel entre deux particules de silice NS
+
+        # plot potential between two NS silica particles
         R=6e-9
         #R=5e-9
         hamacker=getHamacker(2.2)
@@ -838,8 +838,8 @@ if __name__ == '__main__':
         plt.savefig("interaction.pdf")
         plt.show()
         
-        #ce qu'il faut pour le modèle de floculation
-        # les paramètres d'entrée.
+        #what is needed for the flocculation model
+        # the input parameters.
         V=1
         vCSHLD=0.022
         vCSHHD=0.013
@@ -849,13 +849,13 @@ if __name__ == '__main__':
         vanhydre0=0.32
         vSS0=0.0
     
-    #il faut passer au nombre de particules via la surface spécifique
+    #need to convert to number of particles via specific surface area
         
     
     
     '''
-    # cadrage de la constante d'équiblre pour colloidal silica, Ca2+
-    # solution à pH9.
+    # calibration of the equilibrium constant for colloidal silica, Ca2+
+    # solution at pH9.
     
     cCa=2e-8 # en mol/L
     cOHm=1e-14/1e-9     #cCa+np.sqrt(cCa*cCa+1e-14)

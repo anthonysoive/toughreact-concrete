@@ -70,7 +70,7 @@ def calcul_hydratation(formulation,temps_cure):
     n=1000
     T=[0.]+logspace(log10(0.01),log10(tfin),n).tolist()
     
-    #lancé du modèle d'hydratation
+    #launch of the hydration model
     #print("running hydration toughreact_concrete.model...")
     res=cm.run(T)
     statelast=res[len(res)-1]
@@ -97,7 +97,7 @@ def calcul_hydratation(formulation,temps_cure):
     #if statelast["compo"]['CH']>0:
     #    print("formed portlandite, mol/cm3 of paste, CH:",statelast["compo"]['CH'])
     
-    #transformation de Cm3/cm3 de pâte à en cm3/cm3 de matériau
+    #conversion from cm3/cm3 of paste to cm3/cm3 of material
     frac_vol_granulats = 0
     for elem in formulation["granulats"]:
         nature = formulation["granulats"][elem]['nature']
@@ -107,7 +107,7 @@ def calcul_hydratation(formulation,temps_cure):
     print("Fraction volumique de pâte : ",frac_vol_pate)
     for elem in statelast["fracvol"]:
         statelast["fracvol"][elem] = statelast["fracvol"][elem]*frac_vol_pate
-    #transformation de mol/cm3 de pâte à en mol/cm3 de matériau
+    #conversion from mol/cm3 of paste to mol/cm3 of material
     for elem in statelast["compo"]:
         statelast["compo"][elem] = statelast["compo"][elem]*frac_vol_pate
     
@@ -126,7 +126,7 @@ def calcul_hydratation(formulation,temps_cure):
     #statelast["fracvol"]["CSH"] = statelast["compo"]["CSH"]*CSH['v']*volume_pate
     #statelast["fracvol"]["CSHp"] = statelast["compo"]["CSHp"]*CSHp['v']*volume_pate
     #print("Fractions volumiques (cm3/cm3 de materiau) : ",statelast["fracvol"])
-    #print("quantité molaire (mol/cm3 de materiau) : ",statelast["compo"])
+    #print("molar quantity (mol/cm3 of material): ",statelast["compo"])
     #print(statelast["compo"].values())
     #print(statelast["compo"])
     
