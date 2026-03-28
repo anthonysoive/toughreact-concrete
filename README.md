@@ -15,14 +15,24 @@ Python package for simulating reactive transport and chemical durability in conc
 
 ## Installation
 
+### 1. Clone the repository
+
 ```bash
-pip install PyTOUGH
-pip install toughreact-concrete
+git clone https://github.com/anthonysoive/toughreact-concrete.git
+cd toughreact-concrete
+```
+
+### 2. Install the package
+
+Requires Python 3.11+.
+
+```bash
+pip install -e .
 ```
 
 ### TOUGHREACT solver binaries
 
-The TOUGHREACT solver binaries are **not included** in this package (licence restrictions). Download them from the [TOUGH portal](https://tough.lbl.gov/software/toughreact/) and place them in `toughreact_concrete/exe/` following the naming convention used in `pre.py`.
+The TOUGHREACT solver binaries are **not included** in this repository (licence restrictions). Download them from the [TOUGH portal](https://tough.lbl.gov/software/toughreact/) and place them in `toughreact_concrete/exe/` following the naming convention used in `pre.py`.
 
 Pre-compiled binaries for Windows, macOS (Intel), and Linux are available separately upon request.
 
