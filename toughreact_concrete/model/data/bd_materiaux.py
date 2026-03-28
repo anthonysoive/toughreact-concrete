@@ -241,6 +241,47 @@ formulation_beton['cem1_ASE'] = {"granulats":{"g12.5/20":{"kg":1875.5,'nature':n
                             "binder":{"c":{"kg":420.,"compo":ciment['CEM I 52.5 PM ES CP2']}},
                             "e":210, "phiair":0.0}
 #####################################################################################################################
+# Étude Ravi — béton M70-30FA (granulat ISO, CEM I + FA + SF spécifiques)
+nature_granulat['ISO'] = {'densite': 2.64, 'capa': 0.84}
+
+compo_ciment['CEM I'] = {
+    "SiO2": 20.00, "Al2O3": 4.60, "TiO2": 0.0, "Fe2O3": 3.20,
+    "CaO": 64.00, "MgO": 1.30, "Na2O": 0.07, "K2O": 1.30,
+    "SO3": 3.40, "Mn2O3": 0.0, "P2O5": 0.48, "Cl": 0.006, "CO2": 0, "Cr2O3": 0.00,
+}
+ciment['CEM I'] = {'composition': compo_ciment['CEM I'], 'surface_specific': 490.}
+
+compo_fly_ash['FA_Ravi'] = {
+    "SiO2": 52.00, "Al2O3": 27.50, "TiO2": 0.00, "Fe2O3": 4.80,
+    "CaO": 6.42, "MgO": 1.85, "Na2O": 1.01, "K2O": 0.69,
+    "SO3": 1.10, "Cl": 0.01, "CO2": 0.0,
+}
+fly_ash['FA_Ravi'] = {'composition': compo_fly_ash['FA_Ravi'], 'surface_specific': 340.}
+
+compo_silica_fume['SF_Ravi'] = {
+    "SiO2": 96.00, "Al2O3": 0.00, "TiO2": 0.0, "Fe2O3": 0.00,
+    "CaO": 0.10, "MgO": 0.00, "Na2O": 0.60, "K2O": 0.00,
+    "SO3": 0.50, "Cl": 0.02, "CO2": 0.0,
+}
+silica_fume['SF_Ravi'] = {'composition': compo_silica_fume['SF_Ravi'], 'surface_specific': 23200.}
+
+formulation_beton['M70-30FA'] = {
+    "granulats": {
+        "g12.5/20": {"kg": 0., 'nature': nature_granulat['ISO']},
+        "g5/12.5": {"kg": 0., 'nature': nature_granulat['ISO']},
+        "g0/5":    {"kg": 0., 'nature': nature_granulat['ISO']},
+        "s0/4":    {"kg": 0., 'nature': nature_granulat['ISO']},
+    },
+    "binder": {
+        "c":          {"kg": 864.00, "compo": ciment['CEM I']},
+        "fly_ash":    {"kg": 283.50, "compo": fly_ash['FA_Ravi']},
+        "silica_fume":{"kg": 202.50, "compo": silica_fume['SF_Ravi']},
+    },
+    "e": 607.50, "phiair": 0.0,
+}
+
+indicateurs_deduits['M70-30FA'] = {'K_eau': 8.0e-21, 'cl_adsorption_csh': 0.0001}
+#####################################################################################################################
 
 mesures_expe = {}
 #BHP2000
