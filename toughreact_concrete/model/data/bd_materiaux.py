@@ -280,8 +280,6 @@ formulation_beton['M70-30FA'] = {
     "e": 607.50, "phiair": 0.0,
 }
 
-indicateurs_deduits = {}
-indicateurs_deduits['M70-30FA'] = {'K_eau': 8.0e-21, 'cl_adsorption_csh': 0.0001}
 #####################################################################################################################
 
 mesures_expe = {}
@@ -326,6 +324,7 @@ indicateurs_deduits['M50FA-EA'] = {'K_eau':8.0e-21,'D_eff':1.8e-12,'cl_adsorptio
 indicateurs_deduits['M50-EA'] = {'K_eau':8.0e-21,'D_eff':1.8e-12,'cl_adsorption_csh':0.0001}#A determiner!
 indicateurs_deduits['M50FA'] = {'K_eau':8.0e-21,'D_eff':0.35e-12,'cl_adsorption_csh':0.0001}#A determiner!
 indicateurs_deduits['M50'] = {'K_eau':8.0e-21,'D_eff':0.8e-12,'cl_adsorption_csh':0.16}
+indicateurs_deduits['M70-30FA'] = {'K_eau': 8.0e-21, 'cl_adsorption_csh': 0.0001}
 indicateurs_deduits['M75SF-EA'] = {'K_eau':8.0e-21,'D_eff':1.8e-12,'cl_adsorption_csh':0.0001}#A determiner!
 indicateurs_deduits['M75-EA'] = {'K_eau':8.0e-21,'D_eff':1.8e-12,'cl_adsorption_csh':0.0001}#A determiner!
 indicateurs_deduits['M75'] = {'K_eau':8.0e-21,'D_eff':1.0e-12,'cl_adsorption_csh':0.0001}#A determiner!

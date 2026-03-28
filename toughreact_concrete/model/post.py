@@ -118,11 +118,10 @@ def convert_to_pandas(chemin, toughreact_exe, pitzer, complexation, time_output,
                         df_pos_x_tmp = df_pos_x['X']
                         for l in range(1,mesh.num_elem['Z']):
                             df_pos_x_tmp = pd.concat([df_pos_x_tmp, df_pos_x['X']], ignore_index=True)
-                        data['X'][i:nb_lines_per_record+i] = df_pos_x_tmp
-                        dict_tmp['X'] = data['X']
+                        dict_tmp['X'] = df_pos_x_tmp.reset_index(drop=True)
                     else:
-                        dict_tmp[elem_entete] = data[elem_entete][i:nb_lines_per_record+i]
-                df = pd.DataFrame(dict_tmp,index=[j for j in range(i,nb_lines_per_record+i)])
+                        dict_tmp[elem_entete] = data[elem_entete][i:nb_lines_per_record+i].reset_index(drop=True)
+                df = pd.DataFrame(dict_tmp)
                 sheet_name = "%.2f"%(elem/3600.0/24.0) + "j"
                 df.to_excel(writer,sheet_name=str(sheet_name))
                 i += nb_lines_per_record + 1
@@ -154,11 +153,10 @@ def convert_to_pandas_out(chemin, toughreact_exe, pitzer, time_output, init, mes
                         df_pos_x_tmp = df_pos_x['X']
                         for l in range(1,mesh.num_elem['Z']):
                             df_pos_x_tmp = pd.concat([df_pos_x_tmp, df_pos_x['X']], ignore_index=True)
-                        data['X'][i:nb_lines_per_record+i] = df_pos_x_tmp
-                        dict_tmp['X'] = data['X']
+                        dict_tmp['X'] = df_pos_x_tmp.reset_index(drop=True)
                     else:
-                        dict_tmp[elem_entete] = data[elem_entete][i:nb_lines_per_record+i]
-                df = pd.DataFrame(dict_tmp,index=[j for j in range(i,nb_lines_per_record+i)])
+                        dict_tmp[elem_entete] = data[elem_entete][i:nb_lines_per_record+i].reset_index(drop=True)
+                df = pd.DataFrame(dict_tmp)
                 sheet_name = "%.2f"%(elem/3600.0/24.0) + "j"
                 df.to_excel(writer,sheet_name=str(sheet_name))
                 i += nb_lines_per_record + 1
